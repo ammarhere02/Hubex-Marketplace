@@ -1,0 +1,32 @@
+// Validates configuration once at startup so a missing variable fails loudly
+// instead of surfacing later as a confusing runtime error. Server-only.
+import { z } from "zod";
+
+const schema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
+  DATABASE_URL: z.string().startsWith("mysql://"),
+  REDIS_URL: z.string().startsWith("redis://"),
+  SHOPIFY_SHOP: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]*$/, "subdomain only, without .myshopify.com"),
+  SHOPIFY_CLIENT_ID: z.string().min(1),
+  SHOPIFY_CLIENT_SECRET: z.string().min(1),
+  SHOPIFY_API_VERSION: z.string().regex(/^\d{4}-\d{2}$/),
+});
+
+export type Env = z.infer<typeof schema>;
+
+let cached: Env | undefined;
+
+export function env(): Env {
+  if (cached) return cached;
+  const parsed = schema.safeParse(process.env);
+  if (!parsed.success) {
+    // Report variable names only — never values.
+    const problems = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+    throw new Error(`Invalid environment configuration:\n  ${problems.join("\n  ")}`);
+  }
+  cached = parsed.data;
+  return cached;
+}

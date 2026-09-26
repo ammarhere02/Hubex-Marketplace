@@ -1,0 +1,24 @@
+# Local credentials. Keep only the example in Git.
+.env
+.env.*
+!.env.example
+
+# Dependencies, generated output, and local tooling state.
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+.shopify/
+.claude/settings.local.json
+*.log
+.DS_Store
+
+# Next.js generated/output
+/out/
+/build
+next-env.d.ts
+.vercel
+*.pem
+.pnp.*
+src/generated/
