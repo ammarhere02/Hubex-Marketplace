@@ -15,7 +15,8 @@
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit",
-    "spike:cod": "tsx scripts/spike-cod-order.ts"
+    "spike:cod": "tsx scripts/spike-cod-order.ts",
+    "sync:products": "tsx scripts/sync-products.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
