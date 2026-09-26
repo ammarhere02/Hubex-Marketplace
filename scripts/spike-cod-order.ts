@@ -18,6 +18,7 @@ const log = logger.child({ component: "spike" });
 
 async function main() {
   const localOrderId = Number(process.argv[2] ?? 900001);
+  const publicId = `spike-${localOrderId}`;
 
   const def = await ensureOrderIdDefinition(log);
   log.info(def, "A. order-id metafield definition ready");
@@ -36,6 +37,7 @@ async function main() {
 
   const input: CodOrderInput = {
     localOrderId,
+    publicId,
     currency: shop.currencyCode,
     shipping: {
       firstName: "Spike",
@@ -50,7 +52,7 @@ async function main() {
     total: variant.price,
   };
 
-  const before = await findOrderByCustomId(localOrderId, log);
+  const before = await findOrderByCustomId(publicId, log);
   log.info({ found: before?.name ?? null }, "C0. lookup before create");
 
   if (!before) {
@@ -61,7 +63,7 @@ async function main() {
     );
   }
 
-  const found = await findOrderByCustomId(localOrderId, log);
+  const found = await findOrderByCustomId(publicId, log);
   log.info({ found }, "C. lookup by custom ID after create");
 
   const second = await orderCreateCod(input, log);

@@ -10,9 +10,11 @@
 // Variants/images are reconciled per product during the scan. That is safe because
 // fetchAllProducts only yields a product once ALL its nested pages were read.
 // Archived/draft products stay in MySQL with their status; the storefront filters them.
+import { UnrecoverableError } from "bullmq";
 import { Prisma, ProductStatus } from "@/generated/prisma/client";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { fetchAllProducts, type ShopifyProduct } from "@/lib/shopify";
+import { fetchAllProducts, fetchShopCurrency, type ShopifyProduct } from "@/lib/shopify";
 import type { JobDefinition } from "./run-job";
 
 function toStatus(status: string): ProductStatus {
@@ -28,6 +30,7 @@ async function upsertProduct(p: ShopifyProduct, runStartedAt: Date): Promise<voi
     title: p.title,
     descriptionHtml: p.descriptionHtml,
     status: toStatus(p.status),
+    productType: p.productType.trim(),
     options: p.options as unknown as Prisma.InputJsonValue,
     isRemoved: false,
     lastSyncedAt: runStartedAt,
@@ -75,6 +78,11 @@ export const syncProductsJob: JobDefinition = {
   async handler({ job, log }) {
     // Same value stamped on every product this run; MySQL DATETIME(3) keeps the milliseconds.
     const runStartedAt = new Date();
+    // Prices are stored without a currency column, so a mismatch would mislabel every price.
+    const currency = await fetchShopCurrency(log);
+    if (currency !== env().SHOP_CURRENCY) {
+      throw new UnrecoverableError(`Shop currency is ${currency} but SHOP_CURRENCY is ${env().SHOP_CURRENCY}`);
+    }
     let products = 0;
     let variants = 0;
     let images = 0;

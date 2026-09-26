@@ -1,37 +1,74 @@
-// Product listing (basic; AdminLTE styling comes in Phase 10).
+// Product listing: category filter (Shopify productType) + AdminLTE pagination.
 import Link from "next/link";
-import { formatPrice, listProducts } from "@/lib/catalog";
+import { ProductCard, SectionTitle } from "@/app/_components/product-card";
+import { listCategories, listProducts } from "@/lib/catalog";
+import { env } from "@/lib/env";
 
 export default async function ProductsPage({ searchParams }: PageProps<"/products">) {
-  const raw = Number((await searchParams).page);
+  const sp = await searchParams;
+  const raw = Number(sp.page);
   const page = Number.isInteger(raw) && raw > 0 ? raw : 1;
-  const { products, total, pageCount } = await listProducts(page);
+  const category = typeof sp.category === "string" && sp.category ? sp.category : undefined;
+  const [{ products, total, pageCount }, categories] = await Promise.all([
+    listProducts({ page, category }),
+    listCategories(),
+  ]);
+  const href = (p: number) => {
+    const q = new URLSearchParams({ ...(category ? { category } : {}), page: String(p) });
+    return `/products?${q}`;
+  };
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Products ({total})</h1>
-      <ul style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, listStyle: "none", padding: 0 }}>
-        {products.map((p) => (
-          <li key={p.id}>
-            <Link href={`/products/${p.handle}`}>
-              {p.image && (
-                // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs; next/image config deferred
-                <img src={p.image.url} alt={p.image.altText ?? p.title} style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }} />
-              )}
-              <div>{p.title}</div>
-            </Link>
-            <div>{p.minPrice ? formatPrice(p.minPrice) : "—"}</div>
-            <div>{p.available ? "In stock" : "Out of stock"}</div>
-          </li>
+    <div className="container">
+      <div className="mb-3">
+        <Link href="/products" className={`mm-pill ${!category ? "active" : ""}`}>
+          All
+        </Link>
+        {categories.map((c) => (
+          <Link
+            key={c.name}
+            href={`/products?category=${encodeURIComponent(c.name)}`}
+            className={`mm-pill ${category === c.name ? "active" : ""}`}
+          >
+            {c.name} ({c.count})
+          </Link>
         ))}
-      </ul>
-      <nav style={{ display: "flex", gap: 16 }}>
-        {page > 1 && <Link href={`/products?page=${page - 1}`}>← Previous</Link>}
-        <span>
-          Page {page} of {pageCount}
-        </span>
-        {page < pageCount && <Link href={`/products?page=${page + 1}`}>Next →</Link>}
-      </nav>
-    </main>
+      </div>
+
+      <SectionTitle lead={category ? "Category:" : "All"} accent={`${category ?? "Products"} (${total})`} />
+      {products.length === 0 ? (
+        <div className="callout callout-info">No products here yet.</div>
+      ) : (
+        <div className="mm-grid">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} currency={env().SHOP_CURRENCY} />
+          ))}
+        </div>
+      )}
+
+      {pageCount > 1 && (
+        <nav className="mt-4 d-flex justify-content-center">
+          <ul className="pagination">
+            <li className={`page-item ${page <= 1 ? "disabled" : ""}`}>
+              <Link className="page-link" href={href(Math.max(1, page - 1))}>
+                «
+              </Link>
+            </li>
+            {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
+              <li key={p} className={`page-item ${p === page ? "active" : ""}`}>
+                <Link className="page-link" href={href(p)}>
+                  {p}
+                </Link>
+              </li>
+            ))}
+            <li className={`page-item ${page >= pageCount ? "disabled" : ""}`}>
+              <Link className="page-link" href={href(Math.min(pageCount, page + 1))}>
+                »
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      )}
+    </div>
   );
 }

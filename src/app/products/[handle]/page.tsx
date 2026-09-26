@@ -1,9 +1,11 @@
-// Product detail (basic; the React e-commerce.html conversion with gallery and
-// variant selectors replaces this in Phase 10).
+// Product detail: loads one product from MySQL and hands serializable data to the
+// React e-commerce.html conversion (product-detail.tsx).
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { formatPrice, getProductByHandle } from "@/lib/catalog";
+import { getProductByHandle } from "@/lib/catalog";
+import { env } from "@/lib/env";
+import { ProductDetail } from "./product-detail";
 
 export default async function ProductPage({ params }: PageProps<"/products/[handle]">) {
   await connection(); // catalog changes after every sync: render per request, never at build
@@ -11,38 +13,39 @@ export default async function ProductPage({ params }: PageProps<"/products/[hand
   const product = await getProductByHandle(handle);
   if (!product) notFound(); // unknown, draft, archived, or removed
 
+  const options = (product.options as Array<{ name: string; values: string[] }>) ?? [];
   return (
-    <main style={{ padding: 24 }}>
-      <Link href="/products">← All products</Link>
-      <h1>{product.title}</h1>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto" }}>
-        {product.images.map((img) => (
-          // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs; next/image config deferred
-          <img key={img.id} src={img.url} alt={img.altText ?? product.title} style={{ height: 160 }} />
-        ))}
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th align="left">Variant</th>
-            <th align="left">SKU</th>
-            <th align="right">Price</th>
-            <th align="right">Stock</th>
-          </tr>
-        </thead>
-        <tbody>
-          {product.variants.map((v) => (
-            <tr key={v.id}>
-              <td>{v.title}</td>
-              <td>{v.sku ?? ""}</td>
-              <td align="right">{formatPrice(v.price)}</td>
-              <td align="right">{v.availableForSale ? v.inventoryQuantity : "Sold out"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* Merchant-authored HTML from our own Shopify store (synced, not user input). */}
-      <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
-    </main>
+    <div className="container">
+      <ol className="breadcrumb bg-transparent px-0">
+        <li className="breadcrumb-item">
+          <Link href="/">Home</Link>
+        </li>
+        {product.productType && (
+          <li className="breadcrumb-item">
+            <Link href={`/products?category=${encodeURIComponent(product.productType)}`}>{product.productType}</Link>
+          </li>
+        )}
+        <li className="breadcrumb-item active">{product.title}</li>
+      </ol>
+      <ProductDetail
+        title={product.title}
+        descriptionHtml={product.descriptionHtml}
+        currency={env().SHOP_CURRENCY}
+        images={product.images.map((i) => ({ id: i.id, url: i.url, altText: i.altText }))}
+        options={options.map((o) => ({ name: o.name, values: o.values }))}
+        variants={product.variants.map((v) => ({
+          id: v.id,
+          title: v.title,
+          sku: v.sku,
+          price: v.price.toFixed(2),
+          compareAtPrice: v.compareAtPrice && v.compareAtPrice.gt(v.price) ? v.compareAtPrice.toFixed(2) : null,
+          available: v.availableForSale,
+          stock: v.inventoryQuantity,
+          options: Object.fromEntries(
+            (v.selectedOptions as Array<{ name: string; value: string }>).map((s) => [s.name, s.value]),
+          ),
+        }))}
+      />
+    </div>
   );
 }

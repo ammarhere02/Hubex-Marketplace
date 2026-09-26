@@ -2,9 +2,11 @@
 import { JOBS } from "@/lib/queue";
 import type { JobDefinition } from "./run-job";
 import { pingJob } from "./ping";
+import { submitOrderJob } from "./submit-order";
 import { syncProductsJob } from "./sync-products";
 
 export const jobDefinitions: Record<string, JobDefinition> = {
   [JOBS.ping]: pingJob,
   [JOBS.syncProducts]: syncProductsJob,
+  [JOBS.submitOrder]: submitOrderJob,
 };

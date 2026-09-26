@@ -1,49 +1,336 @@
+/* MegaMart-inspired theme layered on AdminLTE 3.2.0 (loaded before this file). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  --mm-blue: #008ecc;
+  --mm-blue-dark: #0070a3;
+  --mm-ink: #222;
+  --mm-muted: #666;
+  --mm-line: #ededed;
+  --mm-tile: #f5f5f5;
+  --mm-green: #249b3e;
 }
 
 body {
-  min-height: 100%;
+  font-family: var(--font-poppins), "Source Sans Pro", sans-serif;
+  color: var(--mm-ink);
+  background: #fff;
+}
+a {
+  color: var(--mm-blue);
+}
+.btn-primary,
+.badge-primary {
+  background-color: var(--mm-blue);
+  border-color: var(--mm-blue);
+}
+.btn-primary:hover {
+  background-color: var(--mm-blue-dark);
+  border-color: var(--mm-blue-dark);
+}
+
+/* ---------- header ---------- */
+.mm-topbar {
+  background: var(--mm-tile);
+  font-size: 12px;
+  color: var(--mm-muted);
+  padding: 6px 0;
+}
+.layout-top-nav .main-header.mm-navbar {
+  border-bottom: 1px solid var(--mm-line);
+  padding: 14px 0;
+  margin-left: 0 !important;
+}
+.mm-brand {
+  color: var(--mm-blue) !important;
+  font-weight: 700;
+  font-size: 24px;
+}
+.mm-brand .fa-bars {
+  font-size: 18px;
+  color: var(--mm-blue);
+}
+.mm-navbar .nav-link {
+  color: var(--mm-ink) !important;
+  font-weight: 500;
+}
+.mm-catbar {
+  border-bottom: 1px solid var(--mm-line);
+  padding: 10px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.mm-pill {
+  display: inline-block;
+  padding: 6px 16px;
+  margin-right: 10px;
+  border-radius: 20px;
+  background: var(--mm-tile);
+  color: var(--mm-ink);
+  font-size: 13px;
+}
+.mm-pill:hover,
+.mm-pill.active {
+  background: var(--mm-blue);
+  color: #fff;
+}
+
+/* ---------- content ---------- */
+/* AdminLTE sizes .content-wrapper from its own 3.5rem header height; ours is taller,
+   which pushed the footer below the fold. A flex column keeps it at the bottom instead. */
+.layout-top-nav .wrapper {
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
-
-* {
-  box-sizing: border-box;
-  padding: 0;
+.layout-top-nav .content-wrapper.mm-content {
+  background: #fff;
+  margin-left: 0 !important;
+  margin-top: 0;
+  min-height: 0;
+  flex: 1 0 auto;
+  padding: 24px 0 48px;
+}
+.mm-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #212844;
+  color: #fff;
+  padding: 44px 48px;
+  min-height: 220px;
+}
+.mm-hero::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -80px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+.mm-hero h1 {
+  font-size: 40px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+.mm-hero img {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: 180px;
+  border-radius: 12px;
+  z-index: 1;
+}
+.mm-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--mm-line);
+  margin: 40px 0 20px;
+}
+.mm-section-title h2 {
+  font-size: 20px;
+  font-weight: 600;
   margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--mm-blue);
+  margin-bottom: -2px;
+}
+.mm-section-title h2 span {
+  color: var(--mm-blue);
+}
+.mm-section-title a {
+  color: var(--mm-ink);
+  font-size: 13px;
+  padding-bottom: 10px;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* ---------- product card ---------- */
+.mm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 20px;
+}
+.card.mm-card {
+  border: 1px solid var(--mm-line);
+  border-radius: 16px;
+  box-shadow: none;
+  overflow: hidden;
+  color: var(--mm-ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card.mm-card:hover {
+  border-color: var(--mm-blue);
+  box-shadow: 0 6px 20px rgba(0, 142, 204, 0.15);
+}
+.mm-card-img {
+  position: relative;
+  background: var(--mm-tile);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mm-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mm-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--mm-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  padding: 8px 10px;
+  border-bottom-left-radius: 12px;
+}
+.mm-soldout {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.mm-card-body {
+  padding: 12px 14px;
+}
+.mm-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 42px;
+}
+.mm-price-row {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--mm-line);
+  padding-bottom: 8px;
+}
+.mm-price-row del {
+  color: var(--mm-muted);
+  font-size: 13px;
+}
+.mm-save {
+  color: var(--mm-green);
+  font-size: 13px;
+  font-weight: 500;
+  padding-top: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* ---------- categories ---------- */
+.mm-cats {
+  display: flex;
+  gap: 28px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.mm-cat {
+  text-align: center;
+  color: var(--mm-ink);
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+.mm-cat-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--mm-tile);
+  overflow: hidden;
+  margin: 0 auto 10px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.mm-cat:hover .mm-cat-img {
+  border-color: var(--mm-blue);
+}
+.mm-cat-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- product detail (e-commerce.html) ---------- */
+.mm-content .product-image {
+  border-radius: 12px;
+  background: var(--mm-tile);
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+.mm-content .product-image-thumb {
+  cursor: pointer;
+  background: var(--mm-tile);
+}
+.mm-content .product-image-thumb.active {
+  border-color: var(--mm-blue);
+}
+.mm-content .btn-group-toggle .btn.active {
+  background: var(--mm-blue);
+  border-color: var(--mm-blue);
+  color: #fff;
+}
+.mm-content .btn-group-toggle {
+  flex-wrap: wrap;
+}
+.mm-content .product-desc img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- footer ---------- */
+.layout-top-nav .main-footer.mm-footer {
+  margin-left: 0 !important;
+  background: var(--mm-blue);
+  color: #fff;
+  border-top: 0;
+  padding: 48px 0 16px;
+}
+.mm-footer a {
+  color: #fff;
+}
+.mm-footer-brand {
+  font-weight: 700;
+}
+.mm-footer-title {
+  font-weight: 600;
+  border-bottom: 2px solid #fff;
+  display: inline-block;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+}
+.mm-footer li {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.mm-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  padding-top: 16px;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 575.98px) {
+  .mm-hero {
+    padding: 28px 20px;
+  }
+  .mm-hero h1 {
+    font-size: 26px;
+  }
+  .mm-hero img {
+    display: none;
   }
 }

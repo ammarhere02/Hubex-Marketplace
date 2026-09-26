@@ -12,7 +12,9 @@ import { assertNoUserErrors, shopifyGraphQL } from "./client";
 
 export const ORDER_ID_NAMESPACE = "hubex";
 export const ORDER_ID_KEY = "order_id";
-export const orderCustomId = (localOrderId: number) => `hubex-order-${localOrderId}`;
+// Keyed on Order.publicId (random UUID), not the auto-increment id: ids restart after
+// a database reset, and a reused id would "find" an older Shopify order and adopt it.
+export const orderCustomId = (publicId: string) => `hubex-order-${publicId}`;
 
 type UserErrors = Array<{ field?: string[] | null; message: string; code?: string | null }>;
 
@@ -75,14 +77,14 @@ export interface ShopifyOrderRef {
   displayFinancialStatus: string | null;
 }
 
-export async function findOrderByCustomId(localOrderId: number, log?: Logger): Promise<ShopifyOrderRef | null> {
+export async function findOrderByCustomId(publicId: string, log?: Logger): Promise<ShopifyOrderRef | null> {
   const res = await shopifyGraphQL<{ orderByIdentifier: ShopifyOrderRef | null }>(
     `query OrderByCustomId($namespace: String!, $key: String!, $value: String!) {
       orderByIdentifier(identifier: { customId: { namespace: $namespace, key: $key, value: $value } }) {
         id name displayFinancialStatus
       }
     }`,
-    { namespace: ORDER_ID_NAMESPACE, key: ORDER_ID_KEY, value: orderCustomId(localOrderId) },
+    { namespace: ORDER_ID_NAMESPACE, key: ORDER_ID_KEY, value: orderCustomId(publicId) },
     { log, operation: "orderByIdentifier" },
   );
   return res.orderByIdentifier;
@@ -92,6 +94,7 @@ export async function findOrderByCustomId(localOrderId: number, log?: Logger): P
 
 export interface CodOrderInput {
   localOrderId: number;
+  publicId: string;
   currency: string;
   shipping: {
     firstName: string;
@@ -147,7 +150,7 @@ export async function orderCreateCod(input: CodOrderInput, log?: Logger) {
             namespace: ORDER_ID_NAMESPACE,
             key: ORDER_ID_KEY,
             type: "id",
-            value: orderCustomId(input.localOrderId),
+            value: orderCustomId(input.publicId),
           },
         ],
       },

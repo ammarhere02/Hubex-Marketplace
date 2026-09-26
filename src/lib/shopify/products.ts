@@ -43,6 +43,7 @@ export interface ShopifyProduct {
   title: string;
   descriptionHtml: string;
   status: string;
+  productType: string;
   options: Array<{ name: string; position: number; values: string[] }>;
   variants: ShopifyVariant[];
   images: ShopifyImage[];
@@ -63,7 +64,7 @@ query SyncProductsPage($first: Int!, $after: String) {
   products(first: $first, after: $after, sortKey: ID) {
     pageInfo { hasNextPage endCursor }
     nodes {
-      id handle title descriptionHtml status
+      id handle title descriptionHtml status productType
       options { name position values }
       variants(first: ${VARIANTS_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${VARIANT_FIELDS} } }
       media(first: ${MEDIA_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${MEDIA_FIELDS} } }
@@ -147,6 +148,7 @@ export async function* fetchAllProducts(log?: Logger): AsyncGenerator<ProductPag
         title: raw.title,
         descriptionHtml: raw.descriptionHtml,
         status: raw.status,
+        productType: raw.productType,
         options: raw.options,
         variants,
         images: toImages(media),
@@ -158,4 +160,14 @@ export async function* fetchAllProducts(log?: Logger): AsyncGenerator<ProductPag
     if (!data.products.pageInfo.hasNextPage) return;
     after = data.products.pageInfo.endCursor;
   }
+}
+
+/** The store's currency; synced prices are expressed in it. */
+export async function fetchShopCurrency(log?: Logger): Promise<string> {
+  const data = await shopifyGraphQL<{ shop: { currencyCode: string } }>(
+    `query ShopCurrency { shop { currencyCode } }`,
+    {},
+    { log, operation: "shop" },
+  );
+  return data.shop.currencyCode;
 }

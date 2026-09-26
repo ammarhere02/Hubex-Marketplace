@@ -95,7 +95,8 @@ Order 1─* OrderItem, OrderItem *─1 ProductVariant, JobLog standalone.
   description doesn't mention it. So a BullMQ job ID or a local
   `shopifyOrderId` check can't stop a duplicate when Shopify saved the order but the reply was lost.
 - **Chosen recovery: a Shopify-side custom ID.** Every order carries metafield
-  `hubex.order_id = hubex-order-<localId>`. Its definition is type `id` (Shopify requires
+  `hubex.order_id = hubex-order-<Order.publicId>` (a random UUID, not the
+  auto-increment id: ids restart after a DB reset and would "find" an old Shopify order). Its definition is type `id` (Shopify requires
   this type for custom IDs) with `uniqueValues` enabled.
   - Before creating (on every attempt), the worker calls
     `orderByIdentifier(customId: …)`. This is a direct lookup, not the eventually

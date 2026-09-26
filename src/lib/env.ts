@@ -13,6 +13,8 @@ const schema = z.object({
   SHOPIFY_CLIENT_ID: z.string().min(1),
   SHOPIFY_CLIENT_SECRET: z.string().min(1),
   SHOPIFY_API_VERSION: z.string().regex(/^\d{4}-\d{2}$/),
+  // Store currency (ISO 4217). Synced prices are in this currency; sync fails if Shopify disagrees.
+  SHOP_CURRENCY: z.string().regex(/^[A-Z]{3}$/),
 });
 
 export type Env = z.infer<typeof schema>;

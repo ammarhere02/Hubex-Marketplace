@@ -58,3 +58,12 @@ export async function closeQueues(): Promise<void> {
   );
   queues.clear();
 }
+
+/** Adds the submit-order job for a committed order. Re-adding the same order is a no-op. */
+export async function enqueueSubmitOrder(orderId: number): Promise<void> {
+  await getQueue(QUEUES.orders).add(
+    JOBS.submitOrder,
+    { orderId },
+    { ...JOB_OPTIONS[JOBS.submitOrder], jobId: submitOrderJobId(orderId) },
+  );
+}

@@ -37,6 +37,8 @@ model Product {
   title           String        @db.VarChar(255)
   descriptionHtml String        @db.Text
   status          ProductStatus
+  // Shopify productType; the storefront uses it as the category ("" = uncategorised).
+  productType     String        @default("") @db.VarChar(255)
   options         Json
   // Set when a completed scan no longer sees this product in Shopify (deleted).
   isRemoved       Boolean       @default(false)
@@ -48,6 +50,7 @@ model Product {
   images   ProductImage[]
 
   @@index([status, isRemoved])
+  @@index([productType])
 }
 
 model ProductVariant {
@@ -89,29 +92,32 @@ model ProductImage {
 // ---------- Orders (owned locally; submitted to Shopify by the worker) ----------
 
 model Order {
-  id             Int         @id @default(autoincrement())
-  status         OrderStatus @default(PENDING_SYNC)
-  customerName   String      @db.VarChar(255)
-  phone          String      @db.VarChar(32)
-  address1       String      @db.VarChar(255)
-  address2       String?     @db.VarChar(255)
-  city           String      @db.VarChar(128)
-  province       String?     @db.VarChar(128)
-  zip            String      @db.VarChar(32)
-  country        String      @db.VarChar(64)
-  email          String?     @db.VarChar(255)
-  subtotal       Decimal     @db.Decimal(10, 2)
-  total          Decimal     @db.Decimal(10, 2)
-  currency       String      @db.VarChar(3)
-  paymentMethod  String      @default("COD") @db.VarChar(16)
-  shopifyOrderId String?     @unique @db.VarChar(64)
+  id               Int         @id @default(autoincrement())
+  // Random, unguessable ID used in the confirmation URL instead of the sequential id.
+  publicId         String      @unique @db.VarChar(36)
+  status           OrderStatus @default(PENDING_SYNC)
+  customerName     String      @db.VarChar(255)
+  phone            String      @db.VarChar(32)
+  address1         String      @db.VarChar(255)
+  address2         String?     @db.VarChar(255)
+  city             String      @db.VarChar(128)
+  province         String?     @db.VarChar(128)
+  zip              String      @db.VarChar(32)
+  country          String      @db.VarChar(64)
+  email            String?     @db.VarChar(255)
+  subtotal         Decimal     @db.Decimal(10, 2)
+  total            Decimal     @db.Decimal(10, 2)
+  currency         String      @db.VarChar(3)
+  paymentMethod    String      @default("COD") @db.VarChar(16)
+  shopifyOrderId   String?     @unique @db.VarChar(64)
+  shopifyOrderName String?     @db.VarChar(32)
   // Incremented in MySQL at the start of every submit attempt (limit: 5).
-  attempts       Int         @default(0)
-  lastError      String?     @db.Text
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  submittedAt    DateTime?
-  syncedAt       DateTime?
+  attempts         Int         @default(0)
+  lastError        String?     @db.Text
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  submittedAt      DateTime?
+  syncedAt         DateTime?
 
   items OrderItem[]
 
