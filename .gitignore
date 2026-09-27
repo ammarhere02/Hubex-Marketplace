@@ -22,3 +22,6 @@ next-env.d.ts
 *.pem
 .pnp.*
 src/generated/
+
+# Private planning notes (kept locally, not in the repo)
+TODO.md
