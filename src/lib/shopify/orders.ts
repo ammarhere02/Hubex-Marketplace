@@ -154,7 +154,8 @@ export async function orderCreateCod(input: CodOrderInput, log?: Logger) {
           },
         ],
       },
-      options: { sendReceipt: false, sendFulfillmentReceipt: false },
+      // Default is BYPASS (stock untouched). Claim stock, respecting "continue selling" policy.
+      options: { sendReceipt: false, sendFulfillmentReceipt: false, inventoryBehaviour: "DECREMENT_OBEYING_POLICY" },
     },
     { log, operation: "orderCreate" },
   );

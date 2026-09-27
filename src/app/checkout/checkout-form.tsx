@@ -48,7 +48,7 @@ export function CheckoutForm() {
           name={f.name}
           type={f.type ?? "text"}
           required={f.required}
-          defaultValue={f.defaultValue}
+          defaultValue={state.values?.[f.name] ?? f.defaultValue}
           placeholder={f.placeholder}
           autoComplete={f.autoComplete}
           className={`form-control ${errors ? "is-invalid" : ""}`}

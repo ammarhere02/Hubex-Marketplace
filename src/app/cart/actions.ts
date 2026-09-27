@@ -47,7 +47,13 @@ export interface CheckoutState {
   fieldErrors?: Record<string, string[] | undefined>;
   formError?: string;
   problems?: LineProblem[];
+  /** What the customer typed, echoed back so React's post-action form reset refills it. */
+  values?: Record<string, string>;
 }
+
+const CUSTOMER_FIELDS = [
+  "customerName", "phone", "address1", "address2", "city", "province", "zip", "country", "email", "paymentMethod",
+] as const;
 
 export async function checkoutAction(_prev: CheckoutState, formData: FormData): Promise<CheckoutState> {
   let cartJson: unknown;
@@ -59,23 +65,17 @@ export async function checkoutAction(_prev: CheckoutState, formData: FormData): 
   const cart = cartLinesSchema.safeParse(cartJson);
   if (!cart.success) return { formError: "Your cart is empty or invalid." };
 
-  const customer = customerSchema.safeParse({
-    customerName: formData.get("customerName") ?? "",
-    phone: formData.get("phone") ?? "",
-    address1: formData.get("address1") ?? "",
-    address2: formData.get("address2") ?? "",
-    city: formData.get("city") ?? "",
-    province: formData.get("province") ?? "",
-    zip: formData.get("zip") ?? "",
-    country: formData.get("country") ?? "",
-    email: formData.get("email") ?? "",
-    paymentMethod: formData.get("paymentMethod") ?? "",
-  });
-  if (!customer.success) return { fieldErrors: z.flattenError(customer.error).fieldErrors };
+  const values = Object.fromEntries(CUSTOMER_FIELDS.map((f) => [f, String(formData.get(f) ?? "")]));
+  const customer = customerSchema.safeParse(values);
+  if (!customer.success) return { fieldErrors: z.flattenError(customer.error).fieldErrors, values };
 
   const result = await placeOrder(cart.data, customer.data);
   if (!result.ok) {
-    return { formError: "Some items changed since you added them. Review your cart.", problems: result.problems };
+    return {
+      formError: "Some items changed since you added them. Review your cart.",
+      problems: result.problems,
+      values,
+    };
   }
   redirect(`/orders/${result.publicId}`);
 }
