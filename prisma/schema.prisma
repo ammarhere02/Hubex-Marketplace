@@ -46,8 +46,9 @@ model Product {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  variants ProductVariant[]
-  images   ProductImage[]
+  variants        ProductVariant[]
+  images          ProductImage[]
+  webhookReceipts WebhookReceipt[]
 
   @@index([status, isRemoved])
   @@index([productType])
@@ -162,4 +163,30 @@ model JobLog {
 
   @@index([jobName, startedAt])
   @@index([jobId])
+}
+
+enum WebhookReceiptStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+// One row per Shopify webhook delivery. eventId is unique, so a re-delivered webhook
+// is rejected by MySQL instead of being processed twice. productId stays null until
+// the worker has synced the product (products/create arrives before the row exists).
+model WebhookReceipt {
+  id               Int                  @id @default(autoincrement())
+  eventId          String               @unique @db.VarChar(128)
+  topic            String               @db.VarChar(64)
+  shopifyProductId String               @db.VarChar(64)
+  productId        Int?
+  product          Product?             @relation(fields: [productId], references: [id])
+  status           WebhookReceiptStatus @default(RECEIVED)
+  triggeredAt      DateTime?
+  receivedAt       DateTime             @default(now())
+  processedAt      DateTime?
+  error            String?              @db.Text
+
+  @@index([shopifyProductId, receivedAt])
+  @@index([status, receivedAt])
 }

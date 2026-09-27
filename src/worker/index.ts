@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { createRedisConnection } from "@/lib/redis";
-import { QUEUES, type QueueName } from "@/lib/queue";
+import { QUEUES, closeQueues, scheduleOrderSweep, scheduleProductSync, type QueueName } from "@/lib/queue";
 import { jobDefinitions } from "@/jobs";
 import { runJob } from "@/jobs/run-job";
 
@@ -48,6 +48,14 @@ for (const name of Object.values(QUEUES)) {
 
 log.info({ queues: Object.values(QUEUES) }, "worker started");
 
+const syncEvery = env().SYNC_INTERVAL_MINUTES;
+scheduleProductSync(syncEvery)
+  .then(() => log.info({ everyMinutes: syncEvery }, syncEvery ? "sync-products scheduled" : "sync-products schedule disabled"))
+  .catch((err) => log.error({ err }, "could not schedule sync-products"));
+scheduleOrderSweep()
+  .then(() => log.info("sweep-orders scheduled every minute"))
+  .catch((err) => log.error({ err }, "could not schedule sweep-orders"));
+
 let shuttingDown = false;
 async function shutdown(signal: string) {
   if (shuttingDown) return;
@@ -55,6 +63,7 @@ async function shutdown(signal: string) {
   log.info({ signal }, "worker shutting down (finishing active jobs)");
   await Promise.all(workers.map((w) => w.close()));
   await Promise.all(events.map((e) => e.close()));
+  await closeQueues();
   await prisma.$disconnect();
   log.info("worker stopped");
   process.exit(0);

@@ -13,6 +13,8 @@ export const JOBS = {
   ping: "ping", // diagnostic job used to verify the pipeline end to end
   syncProducts: "sync-products",
   submitOrder: "submit-order",
+  syncProduct: "sync-product", // one product, triggered by a Shopify webhook
+  sweepOrders: "sweep-orders", // recovery: PENDING_SYNC orders without a live job
 } as const;
 
 // `attempts` is the TOTAL number of tries, including the first.
@@ -30,6 +32,14 @@ export const JOB_OPTIONS: Record<string, JobsOptions> = {
     removeOnComplete: 1000,
     removeOnFail: 5000,
   },
+  [JOBS.syncProduct]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5_000 }, // 5s, 10s
+    removeOnComplete: 500,
+    removeOnFail: 500,
+  },
+  // A missed sweep is harmless: the next one runs a minute later.
+  [JOBS.sweepOrders]: { attempts: 1, removeOnComplete: 100, removeOnFail: 100 },
 };
 
 /** Deterministic job ID: re-adding the same order is ignored by BullMQ. ":" is reserved. */
@@ -59,11 +69,50 @@ export async function closeQueues(): Promise<void> {
   queues.clear();
 }
 
+const SYNC_SCHEDULER_ID = "sync-products-every";
+
+/**
+ * Repeatable catalog sync. The scheduler lives in Redis under a fixed ID, so calling
+ * this on every worker start updates the one schedule instead of adding another.
+ */
+export async function scheduleProductSync(everyMinutes: number): Promise<void> {
+  const queue = getQueue(QUEUES.catalog);
+  if (everyMinutes === 0) {
+    await queue.removeJobScheduler(SYNC_SCHEDULER_ID);
+    return;
+  }
+  await queue.upsertJobScheduler(
+    SYNC_SCHEDULER_ID,
+    { every: everyMinutes * 60_000 },
+    { name: JOBS.syncProducts, data: {}, opts: JOB_OPTIONS[JOBS.syncProducts] },
+  );
+}
+
+const SWEEP_SCHEDULER_ID = "sweep-orders-every";
+
+/** Repeatable recovery sweep for committed-but-not-queued orders (fixed ID, upserted). */
+export async function scheduleOrderSweep(everyMs = 60_000): Promise<void> {
+  await getQueue(QUEUES.orders).upsertJobScheduler(
+    SWEEP_SCHEDULER_ID,
+    { every: everyMs },
+    { name: JOBS.sweepOrders, data: {}, opts: JOB_OPTIONS[JOBS.sweepOrders] },
+  );
+}
+
 /** Adds the submit-order job for a committed order. Re-adding the same order is a no-op. */
 export async function enqueueSubmitOrder(orderId: number): Promise<void> {
   await getQueue(QUEUES.orders).add(
     JOBS.submitOrder,
     { orderId },
     { ...JOB_OPTIONS[JOBS.submitOrder], jobId: submitOrderJobId(orderId) },
+  );
+}
+
+/** Refreshes one product after a webhook. Job ID per receipt: one job per delivery. */
+export async function enqueueSyncProduct(receiptId: number, shopifyProductId: string): Promise<void> {
+  await getQueue(QUEUES.catalog).add(
+    JOBS.syncProduct,
+    { receiptId, shopifyProductId },
+    { ...JOB_OPTIONS[JOBS.syncProduct], jobId: `sync-product-${receiptId}` },
   );
 }

@@ -24,7 +24,7 @@ function toStatus(status: string): ProductStatus {
   return ProductStatus.DRAFT;
 }
 
-async function upsertProduct(p: ShopifyProduct, runStartedAt: Date): Promise<void> {
+export async function upsertProduct(p: ShopifyProduct, runStartedAt: Date): Promise<void> {
   const fields = {
     handle: p.handle,
     title: p.title,

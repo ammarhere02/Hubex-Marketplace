@@ -109,6 +109,57 @@ function toImages(media: RawMedia[]): ShopifyImage[] {
     .map((m) => ({ id: m.id, url: m.image!.url, altText: m.image!.altText ?? m.alt ?? null }));
 }
 
+/** Reads the nested variant/media pages of one product so nothing is silently truncated. */
+async function completeProduct(raw: RawProduct, log?: Logger): Promise<ShopifyProduct> {
+  const variants = await drain(raw.variants, async (cursor) => {
+    const r = await shopifyGraphQL<{ product: { variants: Connection<ShopifyVariant> } | null }>(
+      VARIANTS_QUERY,
+      { id: raw.id, after: cursor },
+      { log, operation: "product.variants" },
+    );
+    return r.product?.variants;
+  });
+  const media = await drain(raw.media, async (cursor) => {
+    const r = await shopifyGraphQL<{ product: { media: Connection<RawMedia> } | null }>(
+      MEDIA_QUERY,
+      { id: raw.id, after: cursor },
+      { log, operation: "product.media" },
+    );
+    return r.product?.media;
+  });
+  return {
+    id: raw.id,
+    handle: raw.handle,
+    title: raw.title,
+    descriptionHtml: raw.descriptionHtml,
+    status: raw.status,
+    productType: raw.productType,
+    options: raw.options,
+    variants,
+    images: toImages(media),
+  };
+}
+
+const PRODUCT_QUERY = `
+query SyncOneProduct($id: ID!) {
+  product(id: $id) {
+    id handle title descriptionHtml status productType
+    options { name position values }
+    variants(first: ${VARIANTS_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${VARIANT_FIELDS} } }
+    media(first: ${MEDIA_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${MEDIA_FIELDS} } }
+  }
+}`;
+
+/** One product's current state, or null when Shopify no longer has it (deleted). */
+export async function fetchProductById(id: string, log?: Logger): Promise<ShopifyProduct | null> {
+  const data = await shopifyGraphQL<{ product: RawProduct | null }>(
+    PRODUCT_QUERY,
+    { id },
+    { log, operation: "product" },
+  );
+  return data.product ? completeProduct(data.product, log) : null;
+}
+
 export interface ProductPage {
   pageNumber: number;
   products: ShopifyProduct[];
@@ -125,35 +176,7 @@ export async function* fetchAllProducts(log?: Logger): AsyncGenerator<ProductPag
     );
 
     const products: ShopifyProduct[] = [];
-    for (const raw of data.products.nodes) {
-      const variants = await drain(raw.variants, async (cursor) => {
-        const r = await shopifyGraphQL<{ product: { variants: Connection<ShopifyVariant> } | null }>(
-          VARIANTS_QUERY,
-          { id: raw.id, after: cursor },
-          { log, operation: "product.variants" },
-        );
-        return r.product?.variants;
-      });
-      const media = await drain(raw.media, async (cursor) => {
-        const r = await shopifyGraphQL<{ product: { media: Connection<RawMedia> } | null }>(
-          MEDIA_QUERY,
-          { id: raw.id, after: cursor },
-          { log, operation: "product.media" },
-        );
-        return r.product?.media;
-      });
-      products.push({
-        id: raw.id,
-        handle: raw.handle,
-        title: raw.title,
-        descriptionHtml: raw.descriptionHtml,
-        status: raw.status,
-        productType: raw.productType,
-        options: raw.options,
-        variants,
-        images: toImages(media),
-      });
-    }
+    for (const raw of data.products.nodes) products.push(await completeProduct(raw, log));
 
     yield { pageNumber, products };
 

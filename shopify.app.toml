@@ -2,18 +2,24 @@
 
 client_id = "96537e7709726d5f3d4b41a0ec1c46d0"
 name = "Hubex Marketplace"
-application_url = "https://shopify.dev/apps/default-app-home"
+application_url = "https://curtain-disrupt-gummy.ngrok-free.dev"
 embedded = true
 
 [webhooks]
-api_version = "2026-10"
+api_version = "2026-07"
+
+# Relative URI → resolved against application_url (the ngrok static domain), which
+# tunnels to the local Next.js route src/app/api/webhooks/shopify/route.ts.
+[[webhooks.subscriptions]]
+topics = [ "products/create", "products/update", "products/delete" ]
+uri = "/api/webhooks/shopify"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_inventory,read_products,write_orders"
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [ "https://curtain-disrupt-gummy.ngrok-free.dev/api/auth" ]
 
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false

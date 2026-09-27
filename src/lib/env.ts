@@ -15,6 +15,8 @@ const schema = z.object({
   SHOPIFY_API_VERSION: z.string().regex(/^\d{4}-\d{2}$/),
   // Store currency (ISO 4217). Synced prices are in this currency; sync fails if Shopify disagrees.
   SHOP_CURRENCY: z.string().regex(/^[A-Z]{3}$/),
+  // How often the worker schedules sync-products. 0 disables the schedule.
+  SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(15),
 });
 
 export type Env = z.infer<typeof schema>;
