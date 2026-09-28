@@ -7,8 +7,8 @@ import { NavProgress } from "./_components/nav-progress";
 import { SiteFooter } from "./_components/site-footer";
 import { SiteHeader } from "./_components/site-header";
 // Vendored AdminLTE 3.2.0 + its Font Awesome (see src/vendor/README.md); theme last.
-//import "@/vendor/adminlte-3.2.0/fontawesome/css/all.min.css";
-//import "@/vendor/adminlte-3.2.0/css/adminlte.min.css";
+import "@/vendor/adminlte-3.2.0/fontawesome/css/all.min.css";
+import "@/vendor/adminlte-3.2.0/css/adminlte.min.css";
 import "./globals.css";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-poppins" });
