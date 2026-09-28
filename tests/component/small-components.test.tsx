@@ -74,7 +74,7 @@ describe("ClearCart", () => {
   it("empties the cart on mount (order confirmed)", () => {
     cart.add(1, 2);
     render(<ClearCart />);
-    expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([]);
+    expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([]);
   });
 });
 

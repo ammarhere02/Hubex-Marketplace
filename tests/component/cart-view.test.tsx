@@ -67,7 +67,7 @@ describe("CartView", () => {
     // The value is controlled by the server quote, so set it in one change event.
     fireEvent.change(input, { target: { value: "5" } });
     await waitFor(() =>
-      expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([{ variantId: 1, quantity: 5 }]),
+      expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([{ variantId: 1, quantity: 5 }]),
     );
   });
 
@@ -76,7 +76,7 @@ describe("CartView", () => {
     cart.add(1, 2);
     render(<CartView />);
     await user.click(await screen.findByRole("button", { name: /Remove/ }));
-    expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([]);
+    expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([]);
     expect(await screen.findByText("Your cart is empty.")).toBeInTheDocument();
   });
 
@@ -98,7 +98,7 @@ describe("CartView", () => {
     expect(await screen.findByText(/Not enough stock/)).toBeInTheDocument();
     expect(screen.getByText(/only 3 left/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Use 3" }));
-    expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([{ variantId: 1, quantity: 3 }]);
+    expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([{ variantId: 1, quantity: 3 }]);
   });
 
   it("hides quantity inputs and remove buttons in read-only mode (checkout summary)", async () => {

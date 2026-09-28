@@ -47,6 +47,7 @@ export async function proxy(request: NextRequest) {
     if (!me.ok) {
       const res = NextResponse.redirect(login);
       res.cookies.delete(SESSION_COOKIE);
+      res.cookies.delete("hubex_uid"); // client-side per-user scope hint, stale now
       return res;
     }
   } catch (error) {

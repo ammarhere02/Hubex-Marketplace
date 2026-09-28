@@ -3,10 +3,15 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cart, useCart } from "@/app/(store)/cart/cart-store";
 
-const KEY = "hubex-cart-v1";
+const KEY = "hubex-cart-v1:guest";
 const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "[]");
 
+const clearUidCookie = () => {
+  document.cookie = "hubex_uid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+};
+
 beforeEach(() => {
+  clearUidCookie();
   localStorage.clear();
   cart.clear();
 });
@@ -15,6 +20,22 @@ describe("cart store", () => {
   it("adds a line and persists it to localStorage", () => {
     cart.add(1, 2);
     expect(stored()).toEqual([{ variantId: 1, quantity: 2 }]);
+  });
+
+  it("scopes the cart per signed-in account via the hubex_uid cookie", () => {
+    try {
+      document.cookie = "hubex_uid=7; path=/";
+      cart.add(1, 2);
+      document.cookie = "hubex_uid=8; path=/";
+      cart.add(9, 1);
+      // Each account sees only its own lines; the other account's key is untouched.
+      expect(JSON.parse(localStorage.getItem("hubex-cart-v1:7")!)).toEqual([{ variantId: 1, quantity: 2 }]);
+      expect(JSON.parse(localStorage.getItem("hubex-cart-v1:8")!)).toEqual([{ variantId: 9, quantity: 1 }]);
+      const { result } = renderHook(() => useCart());
+      expect(result.current).toEqual([{ variantId: 9, quantity: 1 }]);
+    } finally {
+      clearUidCookie();
+    }
   });
 
   it("merges quantities when the same variant is added again", () => {

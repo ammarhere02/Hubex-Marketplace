@@ -1,7 +1,11 @@
 "use client";
 // Cart persistence: localStorage, holding ONLY { variantId, quantity }.
-// Why localStorage: survives refresh and navigation with no login or server
-// session, and nothing in it is trusted — the server re-prices every line.
+// Why localStorage: survives refresh and navigation without a server round
+// trip, and nothing in it is trusted — the server re-prices every line.
+// The key is scoped per signed-in account via the non-httpOnly hubex_uid
+// cookie (set/cleared alongside the session): two accounts sharing a browser
+// each see only their own cart, and logging back in restores it. The cookie
+// is a display hint only — checkout authority is the httpOnly session.
 // useSyncExternalStore keeps every component (and other tabs) in step.
 import { useSyncExternalStore } from "react";
 
@@ -10,20 +14,30 @@ export interface CartLine {
   quantity: number;
 }
 
-const KEY = "hubex-cart-v1";
+const KEY_PREFIX = "hubex-cart-v1";
 const MAX_QUANTITY = 99;
 const EMPTY: CartLine[] = [];
 const listeners = new Set<() => void>();
-let cache: { raw: string | null; lines: CartLine[] } = { raw: null, lines: EMPTY };
+let cache: { key: string; raw: string | null; lines: CartLine[] } = { key: "", raw: null, lines: EMPTY };
+
+function storageKey(): string {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)hubex_uid=(\d+)/);
+    return `${KEY_PREFIX}:${m ? m[1] : "guest"}`;
+  } catch {
+    return `${KEY_PREFIX}:guest`;
+  }
+}
 
 function read(): CartLine[] {
+  const key = storageKey();
   let raw: string | null = null;
   try {
-    raw = localStorage.getItem(KEY);
+    raw = localStorage.getItem(key);
   } catch {
     return EMPTY; // storage blocked (private mode etc.): behave as an empty cart
   }
-  if (raw === cache.raw) return cache.lines; // stable reference for React
+  if (key === cache.key && raw === cache.raw) return cache.lines; // stable reference for React
   let lines: CartLine[] = EMPTY;
   try {
     const parsed: unknown = JSON.parse(raw ?? "[]");
@@ -36,13 +50,13 @@ function read(): CartLine[] {
   } catch {
     // corrupt value: start over
   }
-  cache = { raw, lines };
+  cache = { key, raw, lines };
   return lines;
 }
 
 function write(lines: CartLine[]) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(lines));
+    localStorage.setItem(storageKey(), JSON.stringify(lines));
   } catch {
     // ignore: cart just won't persist
   }
@@ -51,7 +65,7 @@ function write(lines: CartLine[]) {
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
-  const onStorage = (e: StorageEvent) => e.key === KEY && listener();
+  const onStorage = (e: StorageEvent) => e.key === storageKey() && listener();
   window.addEventListener("storage", onStorage);
   return () => {
     listeners.delete(listener);

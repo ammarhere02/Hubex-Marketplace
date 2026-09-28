@@ -6,6 +6,10 @@ import { prisma } from "../prisma";
 import type { AuthUser } from "./passport";
 
 export const SESSION_COOKIE = "hubex_session";
+// Non-httpOnly companion holding only the numeric user id, so client code can
+// scope per-account state (the localStorage cart key). Never an auth input:
+// every server decision reads the httpOnly session cookie.
+export const UID_COOKIE = "hubex_uid";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 function hashToken(token: string): string {
@@ -20,6 +24,13 @@ export async function createSession(userId: number): Promise<void> {
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
+  store.set(UID_COOKIE, String(userId), {
+    httpOnly: false,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
@@ -48,4 +59,5 @@ export async function destroySession(): Promise<void> {
     await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
   }
   store.delete(SESSION_COOKIE);
+  store.delete(UID_COOKIE);
 }

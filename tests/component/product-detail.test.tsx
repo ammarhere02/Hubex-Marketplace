@@ -111,11 +111,11 @@ describe("ProductDetail", () => {
     const user = userEvent.setup();
     render(<ProductDetail {...baseProps()} />);
     await user.click(screen.getByRole("button", { name: /Add to Cart/ }));
-    expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([{ variantId: 1, quantity: 1 }]);
+    expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([{ variantId: 1, quantity: 1 }]);
     expect(screen.getByText(/Added to your cart/)).toBeInTheDocument();
     // Adding again merges the quantity.
     await user.click(screen.getByRole("button", { name: /Add to Cart/ }));
-    expect(JSON.parse(localStorage.getItem("hubex-cart-v1")!)).toEqual([{ variantId: 1, quantity: 2 }]);
+    expect(JSON.parse(localStorage.getItem("hubex-cart-v1:guest")!)).toEqual([{ variantId: 1, quantity: 2 }]);
   });
 
   it("hides the confirmation once the selection changes", async () => {
