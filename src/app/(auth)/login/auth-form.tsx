@@ -1,7 +1,8 @@
 "use client";
 
-// Shared login/register form. Posts JSON to the auth API and does a full
-// refresh on success so the server-rendered header picks up the new session.
+// Shared login/register form in AdminLTE auth-page style (icon input groups).
+// Posts JSON to the auth API and does a full refresh on success so the
+// server-rendered header picks up the new session.
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -46,31 +47,47 @@ export function AuthForm({ mode }: { mode: Mode }) {
     <form onSubmit={onSubmit} noValidate>
       {error && <div className="alert alert-danger py-2">{error}</div>}
       {mode === "register" && (
-        <div className="form-group">
-          <label htmlFor="auth-name">Name</label>
-          <input id="auth-name" name="name" className="form-control" required maxLength={255} />
+        <div className="input-group mb-3">
+          <input name="name" className="form-control" placeholder="Full name" aria-label="Full name" required maxLength={255} />
+          <div className="input-group-append">
+            <div className="input-group-text">
+              <span className="fas fa-user" />
+            </div>
+          </div>
         </div>
       )}
-      <div className="form-group">
-        <label htmlFor="auth-email">Email</label>
-        <input id="auth-email" name="email" type="email" className="form-control" required maxLength={255} />
+      <div className="input-group mb-3">
+        <input name="email" type="email" className="form-control" placeholder="Email" aria-label="Email" required maxLength={255} />
+        <div className="input-group-append">
+          <div className="input-group-text">
+            <span className="fas fa-envelope" />
+          </div>
+        </div>
       </div>
-      <div className="form-group">
-        <label htmlFor="auth-password">Password</label>
+      <div className="input-group mb-3">
         <input
-          id="auth-password"
           name="password"
           type="password"
           className="form-control"
+          placeholder={mode === "register" ? "Password (min 8 characters)" : "Password"}
+          aria-label="Password"
           required
           minLength={mode === "register" ? 8 : 1}
           autoComplete={mode === "register" ? "new-password" : "current-password"}
         />
-        {mode === "register" && <small className="form-text text-muted">At least 8 characters.</small>}
+        <div className="input-group-append">
+          <div className="input-group-text">
+            <span className="fas fa-lock" />
+          </div>
+        </div>
       </div>
-      <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-        {submitting ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
-      </button>
+      <div className="row">
+        <div className="col-12">
+          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+            {submitting ? "Please wait…" : mode === "register" ? "Register" : "Sign In"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }
