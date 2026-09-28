@@ -28,7 +28,9 @@ describe("sweep-orders integration", () => {
     expect(await run()).toEqual({ checked: 1, live: 0, enqueued: 1 });
     const job = await getQueue(QUEUES.orders).getJob(submitOrderJobId(order.id));
     expect(job).toBeTruthy();
-    expect(job!.data).toEqual({ orderId: order.id });
+    // Recovery enqueue carries the same orderId + Bull Board summary as checkout's.
+    expect(job!.data.orderId).toBe(order.id);
+    expect(job!.data.summary).toMatchObject({ customer: expect.any(String), phone: expect.stringContaining("*") });
   });
 
   it("leaves fresh orders alone (checkout's own enqueue is still in flight)", async () => {

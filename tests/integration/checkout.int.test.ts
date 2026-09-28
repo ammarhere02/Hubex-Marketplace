@@ -37,7 +37,16 @@ describe("checkout integration", () => {
 
     const job = await getQueue(QUEUES.orders).getJob(submitOrderJobId(result.orderId));
     expect(job).toBeTruthy();
-    expect(job!.data).toEqual({ orderId: result.orderId });
+    // orderId stays the worker's source of truth; a masked summary rides along
+    // for Bull Board (who ordered, what, how much) without leaking PII.
+    expect(job!.data.orderId).toBe(result.orderId);
+    expect(job!.data.summary).toMatchObject({
+      customer: expect.any(String),
+      phone: expect.stringContaining("*"), // masked, not the raw number
+      itemCount: 2, // total units ordered (quantity 2 of one line)
+      items: expect.arrayContaining([expect.stringMatching(/^2× /)]),
+    });
+    expect(job!.data.summary.phone).not.toBe(order?.phone); // never the raw phone
     expect(job!.opts.attempts).toBe(5);
   });
 

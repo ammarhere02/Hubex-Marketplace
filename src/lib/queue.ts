@@ -1,6 +1,9 @@
 // Queue and job definitions shared by the web app (producer) and the worker
 // (consumer). Retry policy lives here so both sides agree on it.
 import { Queue, type JobsOptions } from "bullmq";
+import { mask } from "./logger";
+import { formatMoney } from "./money";
+import { prisma } from "./prisma";
 import { createRedisConnection } from "./redis";
 
 export const QUEUES = {
@@ -99,11 +102,67 @@ export async function scheduleOrderSweep(everyMs = 60_000): Promise<void> {
   );
 }
 
+/**
+ * A short, admin-readable snapshot attached to the submit-order job so Bull
+ * Board shows who ordered what at a glance, instead of a bare `{ orderId }`.
+ * Display-only: the worker keeps reading `orderId` and re-loads the order, so
+ * this never affects processing. Customer PII is masked per the logging rules
+ * (first name + last initial, masked phone, city only — no street address).
+ */
+export interface SubmitOrderSummary {
+  ref: string; // first 8 chars of publicId — matches the Shopify order note/tag
+  customer: string;
+  phone: string;
+  city: string;
+  itemCount: number;
+  total: string;
+  items: string[]; // e.g. "2× Trail Shoe — Blue / 42"
+}
+
+type OrderForSummary = {
+  publicId: string;
+  customerName: string;
+  phone: string;
+  city: string;
+  total: { toFixed(digits: number): string };
+  currency: string;
+  items: { productTitle: string; variantTitle: string; quantity: number }[];
+};
+
+export function buildSubmitOrderSummary(order: OrderForSummary): SubmitOrderSummary {
+  const parts = order.customerName.trim().split(/\s+/).filter(Boolean);
+  const customer = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : (parts[0] ?? "");
+  const items = order.items.map((i) => {
+    const label = i.variantTitle && i.variantTitle !== "Default Title" ? `${i.productTitle} — ${i.variantTitle}` : i.productTitle;
+    return `${i.quantity}× ${label}`;
+  });
+  return {
+    ref: order.publicId.slice(0, 8),
+    customer,
+    phone: mask(order.phone),
+    city: order.city,
+    itemCount: order.items.reduce((n, i) => n + i.quantity, 0),
+    total: formatMoney(order.total.toFixed(2), order.currency),
+    items,
+  };
+}
+
 /** Adds the submit-order job for a committed order. Re-adding the same order is a no-op. */
 export async function enqueueSubmitOrder(orderId: number): Promise<void> {
+  // Attach a brief, masked summary for Bull Board; fall back to just the id if
+  // the order can't be read, so enqueueing never fails on the display extra.
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      publicId: true, customerName: true, phone: true, city: true,
+      total: true, currency: true,
+      items: { select: { productTitle: true, variantTitle: true, quantity: true } },
+    },
+  });
+  const data = order ? { orderId, summary: buildSubmitOrderSummary(order) } : { orderId };
   await getQueue(QUEUES.orders).add(
     JOBS.submitOrder,
-    { orderId },
+    data,
     { ...JOB_OPTIONS[JOBS.submitOrder], jobId: submitOrderJobId(orderId) },
   );
 }
