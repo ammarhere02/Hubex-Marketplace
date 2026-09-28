@@ -40,6 +40,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[hand
           price: v.price.toFixed(2),
           compareAtPrice: v.compareAtPrice && v.compareAtPrice.gt(v.price) ? v.compareAtPrice.toFixed(2) : null,
           available: v.availableForSale,
+          imageId: product.images.find((i) => i.shopifyId === v.imageShopifyId)?.id ?? null,
           stock: v.inventoryQuantity,
           options: Object.fromEntries(
             (v.selectedOptions as Array<{ name: string; value: string }>).map((s) => [s.name, s.value]),

@@ -18,6 +18,8 @@ export interface DetailVariant {
   available: boolean;
   stock: number;
   options: Record<string, string>;
+  /** ProductImage id of this variant's own image (from Shopify variant media), if any. */
+  imageId: number | null;
 }
 export interface DetailProps {
   title: string;
@@ -33,8 +35,12 @@ const matches = (v: DetailVariant, selected: Record<string, string>) =>
 
 export function ProductDetail({ title, descriptionHtml, currency, images, options, variants }: DetailProps) {
   const initial = variants.find((v) => v.available) ?? variants[0];
+  const indexOfImage = (imageId: number | null | undefined) => {
+    const i = images.findIndex((img) => img.id === imageId);
+    return i < 0 ? null : i;
+  };
   const [selected, setSelected] = useState<Record<string, string>>(initial?.options ?? {});
-  const [imageIndex, setImageIndex] = useState(0);
+  const [imageIndex, setImageIndex] = useState(() => indexOfImage(initial?.imageId) ?? 0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [tab, setTab] = useState<"desc" | "details">("desc");
@@ -56,6 +62,18 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
     }
     setSelected(next);
     setAdded(false);
+    // Preview the chosen variant's own image, if it has one.
+    const picked = variants.find((v) => matches(v, next));
+    const i = indexOfImage(picked?.imageId);
+    if (i !== null) setImageIndex(i);
+  }
+
+  /** Swatch image for an option value: the image of a variant carrying that value, if all such variants agree. */
+  function swatchFor(name: string, value: string) {
+    const ids = new Set(variants.filter((v) => v.options[name] === value).map((v) => v.imageId));
+    if (ids.size !== 1) return null;
+    const i = indexOfImage([...ids][0]);
+    return i === null ? null : images[i];
   }
 
   const main = images[imageIndex];
@@ -70,8 +88,9 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
             <h3 className="d-inline-block d-sm-none">{title}</h3>
             <div className="col-12">
               {main ? (
+                // key remounts the <img> so the fade animation replays on every image change.
                 // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs
-                <img src={main.url} className="product-image" alt={main.altText ?? title} />
+                <img key={main.id} src={main.url} className="product-image" alt={main.altText ?? title} />
               ) : (
                 <div className="product-image d-flex align-items-center justify-content-center">
                   <i className="fas fa-image fa-4x text-muted" />
@@ -110,10 +129,11 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
                   {o.values.map((value) => {
                     const active = selected[o.name] === value;
                     const possible = isPossible(o.name, value);
+                    const swatch = swatchFor(o.name, value);
                     return (
                       <label
                         key={value}
-                        className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"}`}
+                        className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"} ${swatch ? "mm-has-swatch" : ""}`}
                         title={possible ? undefined : "Sold out in this combination"}
                       >
                         <input
@@ -123,6 +143,10 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
                           checked={active}
                           onChange={() => choose(o.name, value)}
                         />
+                        {swatch && (
+                          // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs
+                          <img src={swatch.url} alt="" className="mm-swatch" />
+                        )}
                         {possible ? value : <del>{value}</del>}
                       </label>
                     );
@@ -177,7 +201,7 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
               </button>
             </div>
             {added && (
-              <div className="alert alert-success mt-3 mb-0">
+              <div className="alert alert-success mt-3 mb-0 mm-toast">
                 <i className="fas fa-check mr-2" />
                 Added to your cart. <Link href="/cart">View cart</Link>
               </div>

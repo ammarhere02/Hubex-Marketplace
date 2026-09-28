@@ -65,6 +65,8 @@ model ProductVariant {
   inventoryQuantity Int
   availableForSale  Boolean
   selectedOptions   Json
+  // Shopify media ID of the variant's own image (matches ProductImage.shopifyId), if any.
+  imageShopifyId    String?  @db.VarChar(64)
   isRemoved         Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

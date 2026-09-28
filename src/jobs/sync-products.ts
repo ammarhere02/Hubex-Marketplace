@@ -53,6 +53,7 @@ export async function upsertProduct(p: ShopifyProduct, runStartedAt: Date): Prom
         inventoryQuantity: v.inventoryQuantity ?? 0,
         availableForSale: v.availableForSale,
         selectedOptions: v.selectedOptions as unknown as Prisma.InputJsonValue,
+        imageShopifyId: v.imageId,
         isRemoved: false,
       };
       await tx.productVariant.upsert({ where: { shopifyId: v.id }, create: { shopifyId: v.id, ...data }, update: data });

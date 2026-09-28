@@ -2,6 +2,8 @@
 // no jQuery/Bootstrap JS) with a MegaMart-inspired theme layered on in globals.css.
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { Suspense } from "react";
+import { NavProgress } from "./_components/nav-progress";
 import { SiteFooter } from "./_components/site-footer";
 import { SiteHeader } from "./_components/site-header";
 // Vendored AdminLTE 3.2.0 + its Font Awesome (see src/vendor/README.md); theme last.
@@ -20,6 +22,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={poppins.variable}>
       <body className="hold-transition layout-top-nav">
+        {/* useSearchParams needs a Suspense boundary so it doesn't opt the shell out of prerendering. */}
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         <div className="wrapper">
           <SiteHeader />
           <div className="content-wrapper mm-content">{children}</div>

@@ -3,11 +3,12 @@
 // are fetched before the product is yielded, so nothing is silently truncated.
 //
 // Page sizes keep requestedQueryCost well under the 1000-point single-query limit:
-// roughly products × (1 + variants + media) = 10 × (1 + 50 + 20) ≈ 710.
+// roughly products × (1 + variants × 2 + media) = 6 × (1 + 100 + 20) ≈ 726
+// (each variant also reads its first media node for the variant preview image).
 import type { Logger } from "@/lib/logger";
 import { shopifyGraphQL } from "./client";
 
-const PRODUCTS_PER_PAGE = 10;
+const PRODUCTS_PER_PAGE = 6;
 const VARIANTS_PER_PAGE = 50;
 const MEDIA_PER_PAGE = 20;
 
@@ -29,6 +30,8 @@ export interface ShopifyVariant {
   inventoryQuantity: number | null;
   availableForSale: boolean;
   selectedOptions: Array<{ name: string; value: string }>;
+  /** Media ID of the variant's image; matches a ShopifyImage.id. */
+  imageId: string | null;
 }
 
 export interface ShopifyImage {
@@ -51,12 +54,15 @@ export interface ShopifyProduct {
 
 // Non-image media (video, 3D) match no fragment and arrive as {}.
 type RawMedia = { id?: string; alt?: string | null; image?: { url: string; altText: string | null } | null };
+type RawVariant = Omit<ShopifyVariant, "imageId"> & { media: { nodes: Array<{ id?: string }> } };
 type RawProduct = Omit<ShopifyProduct, "variants" | "images"> & {
-  variants: Connection<ShopifyVariant>;
+  variants: Connection<RawVariant>;
   media: Connection<RawMedia>;
 };
 
-const VARIANT_FIELDS = `id title sku price compareAtPrice inventoryQuantity availableForSale selectedOptions { name value }`;
+const VARIANT_FIELDS = `id title sku price compareAtPrice inventoryQuantity availableForSale selectedOptions { name value } media(first: 1) { nodes { ... on MediaImage { id } } }`;
+
+const toVariant = ({ media, ...v }: RawVariant): ShopifyVariant => ({ ...v, imageId: media?.nodes[0]?.id ?? null });
 const MEDIA_FIELDS = `... on MediaImage { id alt image { url altText } }`;
 
 const PRODUCTS_QUERY = `
@@ -112,7 +118,7 @@ function toImages(media: RawMedia[]): ShopifyImage[] {
 /** Reads the nested variant/media pages of one product so nothing is silently truncated. */
 async function completeProduct(raw: RawProduct, log?: Logger): Promise<ShopifyProduct> {
   const variants = await drain(raw.variants, async (cursor) => {
-    const r = await shopifyGraphQL<{ product: { variants: Connection<ShopifyVariant> } | null }>(
+    const r = await shopifyGraphQL<{ product: { variants: Connection<RawVariant> } | null }>(
       VARIANTS_QUERY,
       { id: raw.id, after: cursor },
       { log, operation: "product.variants" },
@@ -135,7 +141,7 @@ async function completeProduct(raw: RawProduct, log?: Logger): Promise<ShopifyPr
     status: raw.status,
     productType: raw.productType,
     options: raw.options,
-    variants,
+    variants: variants.map(toVariant),
     images: toImages(media),
   };
 }
