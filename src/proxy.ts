@@ -6,11 +6,18 @@
 // gate. Deeper checks still apply behind it: checkout re-verifies the session,
 // and /admin/queues re-checks the admin role server-side.
 //
-// Public: /login, /register, the auth API itself, and the Shopify webhook
-// (machine-to-machine, protected by its HMAC signature — Shopify cannot log in).
+// Public: /login, /register, the auth API itself, the Shopify webhook
+// (machine-to-machine, protected by its HMAC signature — Shopify cannot log
+// in), and the Railway healthcheck (liveness only, exposes nothing).
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = [/^\/login$/, /^\/register$/, /^\/api\/auth\//, /^\/api\/webhooks\//];
+const PUBLIC_PATHS = [
+  /^\/login$/,
+  /^\/register$/,
+  /^\/api\/auth\//,
+  /^\/api\/webhooks\//,
+  /^\/api\/health$/,
+];
 const SESSION_COOKIE = "hubex_session"; // keep in sync with src/lib/auth/session.ts
 
 export async function proxy(request: NextRequest) {

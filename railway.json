@@ -4,6 +4,7 @@
   "deploy": {
     "preDeployCommand": ["npx prisma migrate deploy"],
     "startCommand": "sh -c 'if [ \"$SERVICE_ROLE\" = worker ]; then npm run worker; else npm start; fi'",
+    "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE"
   }
 }
