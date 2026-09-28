@@ -14,7 +14,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "spike:cod": "tsx scripts/spike-cod-order.ts",
     "sync:products": "tsx scripts/sync-products.ts",
     "test": "vitest run --project unit --project component",
