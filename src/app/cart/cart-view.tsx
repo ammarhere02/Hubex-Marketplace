@@ -98,7 +98,12 @@ export function CartView({ editable = true }: { editable?: boolean }) {
                 <td className="text-right align-middle">{money(l.lineTotal)}</td>
                 {editable && (
                   <td className="text-right align-middle">
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => cart.remove(l.variantId)}>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      // The text span is hidden at mobile widths, so the label keeps the button accessible.
+                      aria-label={`Remove ${l.productTitle}`}
+                      onClick={() => cart.remove(l.variantId)}
+                    >
                       <i className="fas fa-trash" /> <span className="d-none d-md-inline">Remove</span>
                     </button>
                   </td>

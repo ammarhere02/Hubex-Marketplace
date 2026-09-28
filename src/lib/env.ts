@@ -17,9 +17,10 @@ const schema = z.object({
   SHOP_CURRENCY: z.string().regex(/^[A-Z]{3}$/),
   // How often the worker schedules sync-products. 0 disables the schedule.
   SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(15),
-  // Bull Board at /admin/queues (Basic Auth). Leave either empty to disable the board.
-  BULL_BOARD_USER: z.string().optional(),
-  BULL_BOARD_PASSWORD: z.string().optional(),
+  // Admin credentials for the Bull Board at /admin/queues. The admin signs in
+  // through the normal /login page with these; leave either empty to disable the board.
+  ADMIN_EMAIL: z.string().trim().toLowerCase().email().optional(),
+  ADMIN_PASSWORD: z.string().min(8).optional(),
 });
 
 export type Env = z.infer<typeof schema>;

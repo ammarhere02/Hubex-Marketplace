@@ -92,7 +92,7 @@ Fill in `.env`:
 | `REDIS_URL` | `redis://127.0.0.1:6379` |
 | `SYNC_INTERVAL_MINUTES` | How often the catalog sync runs automatically (default `15`, `0` disables it) |
 | `LOG_LEVEL` | `trace`, `debug`, `info` (default), `warn`, `error` |
-| `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` | Optional. Login for the queue dashboard at `/admin/queues`; leave empty to disable it (404) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Optional. Admin login (via the normal `/login` page) for the queue dashboard at `/admin/queues`; leave empty to disable it (404) |
 
 `.env` is git-ignored. Credentials are only read on the server and in the worker. They
 are never exposed to the browser and never logged.
@@ -295,11 +295,12 @@ FROM WebhookReceipt ORDER BY id DESC LIMIT 10;
 
 Tip: pipe the worker through `npx pino-pretty` for readable local output.
 
-**Queue dashboard (Bull Board):** set `BULL_BOARD_USER` and `BULL_BOARD_PASSWORD`, then open
-`/admin/queues` and sign in. It shows the `orders` queue (checkout's `submit-order` jobs
-and the sweep) and the `catalog` queue: waiting, delayed, failed and completed jobs with
-their attempts and errors. It can retry jobs, so it sits behind Basic Auth and is not
-linked from the storefront.
+**Queue dashboard (Bull Board):** set `ADMIN_EMAIL` and `ADMIN_PASSWORD`, then open
+`/admin/queues`. Anonymous visitors are redirected to `/login`; sign in there with the
+admin credentials and you land back on the board. Signed-in non-admin users get a 404.
+It shows the `orders` queue (checkout's `submit-order` jobs and the sweep) and the
+`catalog` queue: waiting, delayed, failed and completed jobs with their attempts and
+errors. It can retry jobs, so it is admin-only and not linked from the storefront.
 
 ---
 

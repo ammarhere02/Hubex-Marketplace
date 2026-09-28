@@ -1,13 +1,17 @@
 // Bull Board: an operator dashboard for the orders (checkout → submit-order) and
-// catalog queues: retries, failures, job data. Behind HTTP Basic Auth and hidden (404)
-// unless BULL_BOARD_USER and BULL_BOARD_PASSWORD are set. Not linked from the
+// catalog queues: retries, failures, job data. Gated by the app's own session
+// login: only the env-configured admin (ADMIN_EMAIL/ADMIN_PASSWORD, signed in via
+// /login) may view it. Anonymous visitors are redirected to /login; signed-in
+// non-admins get 404 so the board's existence isn't advertised. Hidden entirely
+// (404) unless ADMIN_EMAIL and ADMIN_PASSWORD are set. Not linked from the
 // storefront: job data contains order details and the board can retry or delete jobs.
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { HonoAdapter } from "@bull-board/hono";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import { basicAuth } from "hono/basic-auth";
+import { isAdmin } from "@/lib/auth/admin";
+import { getSessionUser } from "@/lib/auth/session";
 import { env } from "@/lib/env";
 import { getQueue, QUEUES } from "@/lib/queue";
 
@@ -15,7 +19,7 @@ const BASE_PATH = "/admin/queues";
 
 let app: Hono | undefined;
 
-function boardApp(username: string, password: string): Hono {
+function boardApp(): Hono {
   if (app) return app;
   const serverAdapter = new HonoAdapter(serveStatic).setBasePath(BASE_PATH);
   createBullBoard({
@@ -23,18 +27,23 @@ function boardApp(username: string, password: string): Hono {
     serverAdapter,
     options: { uiConfig: { boardTitle: "Hubex queues" } },
   });
-  const auth = basicAuth({ username, password });
-  app = new Hono()
-    .use(BASE_PATH, auth)
-    .use(`${BASE_PATH}/*`, auth)
-    .route(BASE_PATH, serverAdapter.registerPlugin());
+  app = new Hono().route(BASE_PATH, serverAdapter.registerPlugin());
   return app;
 }
 
-function handle(request: Request): Response | Promise<Response> {
-  const { BULL_BOARD_USER, BULL_BOARD_PASSWORD } = env();
-  if (!BULL_BOARD_USER || !BULL_BOARD_PASSWORD) return new Response("Not found", { status: 404 });
-  return boardApp(BULL_BOARD_USER, BULL_BOARD_PASSWORD).fetch(request);
+async function handle(request: Request): Promise<Response> {
+  const { ADMIN_EMAIL, ADMIN_PASSWORD } = env();
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) return new Response("Not found", { status: 404 });
+
+  const user = await getSessionUser();
+  if (!user) {
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", BASE_PATH);
+    return Response.redirect(login, 302);
+  }
+  if (!isAdmin(user)) return new Response("Not found", { status: 404 });
+
+  return boardApp().fetch(request);
 }
 
 export const dynamic = "force-dynamic";

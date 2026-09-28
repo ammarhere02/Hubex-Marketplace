@@ -25,3 +25,6 @@ src/generated/
 
 # Private planning notes (kept locally, not in the repo)
 TODO.md
+.next-e2e/
+.claude/
+test-results/

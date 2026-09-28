@@ -192,3 +192,30 @@ model WebhookReceipt {
   @@index([shopifyProductId, receivedAt])
   @@index([status, receivedAt])
 }
+
+// ---------- Auth (Passport local strategy; sessions are DB-backed tokens) ----------
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique @db.VarChar(255)
+  name         String    @db.VarChar(255)
+  passwordHash String    @db.VarChar(255)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions Session[]
+}
+
+// Opaque session tokens: the cookie holds the raw token, MySQL stores its SHA-256
+// hash, so a DB leak can't be replayed as a login. Expired rows are ignored on read.
+model Session {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @db.VarChar(64)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}

@@ -1,6 +1,8 @@
 // Header: welcome strip, brand, and nav links. Category filters live on /products.
 import Link from "next/link";
+import { Suspense } from "react";
 import { CartBadge } from "./cart-badge";
+import { HeaderAuth } from "./header-auth";
 
 export function SiteHeader() {
   return (
@@ -32,6 +34,10 @@ export function SiteHeader() {
             <li className="nav-item">
               <CartBadge />
             </li>
+            {/* Session read is request-time; Suspense keeps the shell prerenderable. */}
+            <Suspense fallback={null}>
+              <HeaderAuth />
+            </Suspense>
           </ul>
         </div>
       </nav>

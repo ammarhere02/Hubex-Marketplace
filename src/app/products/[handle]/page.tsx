@@ -14,22 +14,41 @@ export default async function ProductPage({ params }: PageProps<"/products/[hand
   if (!product) notFound(); // unknown, draft, archived, or removed
 
   const options = (product.options as Array<{ name: string; values: string[] }>) ?? [];
+  // Lead paragraph under the title, as in e-commerce.html: plain text, first ~300 chars.
+  const descriptionText = product.descriptionHtml
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 300);
   return (
-    <div className="container">
-      <ol className="breadcrumb bg-transparent px-0">
-        <li className="breadcrumb-item">
-          <Link href="/">Home</Link>
-        </li>
-        {product.productType && (
-          <li className="breadcrumb-item">
-            <Link href={`/products?category=${encodeURIComponent(product.productType)}`}>{product.productType}</Link>
-          </li>
-        )}
-        <li className="breadcrumb-item active">{product.title}</li>
-      </ol>
+    <div className="container mm-product-page">
+      {/* AdminLTE content-header: page title left, breadcrumb right (e-commerce.html). */}
+      <section className="content-header px-0">
+        <div className="row mb-2">
+          <div className="col-sm-6">
+            <h1>{product.productType || "Product"}</h1>
+          </div>
+          <div className="col-sm-6">
+            <ol className="breadcrumb float-sm-right">
+              <li className="breadcrumb-item">
+                <Link href="/">Home</Link>
+              </li>
+              {product.productType && (
+                <li className="breadcrumb-item">
+                  <Link href={`/products?category=${encodeURIComponent(product.productType)}`}>
+                    {product.productType}
+                  </Link>
+                </li>
+              )}
+              <li className="breadcrumb-item active">{product.title}</li>
+            </ol>
+          </div>
+        </div>
+      </section>
       <ProductDetail
         title={product.title}
         descriptionHtml={product.descriptionHtml}
+        descriptionText={descriptionText}
         currency={env().SHOP_CURRENCY}
         images={product.images.map((i) => ({ id: i.id, url: i.url, altText: i.altText }))}
         options={options.map((o) => ({ name: o.name, values: o.values }))}

@@ -9,6 +9,7 @@
 import { env } from "@/lib/env";
 import { logger, type Logger } from "@/lib/logger";
 import {
+  ShopifyError,
   ShopifyGraphQLError,
   ShopifyThrottledError,
   ShopifyTransportError,
@@ -107,6 +108,9 @@ export async function shopifyGraphQL<T>(
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (e) {
+      // Token-fetch failures are already classified (a 4xx there is permanent,
+      // not an unknown-outcome transport error): pass them through unchanged.
+      if (e instanceof ShopifyError) throw e;
       throw new ShopifyTransportError(`Shopify request failed: ${(e as Error).message}`);
     }
 

@@ -1,0 +1,101 @@
+# Test pipeline: type/lint checks, Vitest (unit + component + integration with
+# isolated MySQL/Redis services), coverage artifact, then Playwright e2e.
+# All credentials below are CI-only placeholders — no real secrets.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Fake Shopify values: every suite mocks the Shopify boundary.
+  SHOPIFY_SHOP: ci-shop
+  SHOPIFY_CLIENT_ID: ci-client-id
+  SHOPIFY_CLIENT_SECRET: ci-client-secret
+  SHOPIFY_API_VERSION: "2026-07"
+  SHOP_CURRENCY: PKR
+  SYNC_INTERVAL_MINUTES: "0"
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: hubex_marketplace_test
+          MYSQL_USER: app
+          MYSQL_PASSWORD: ci-only-password
+          MYSQL_ROOT_PASSWORD: ci-only-root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-only-root --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=3s --health-retries=20
+    env:
+      DATABASE_URL: mysql://app:ci-only-password@127.0.0.1:3306/hubex_marketplace_test
+      REDIS_URL: redis://127.0.0.1:6379/0
+      TEST_DATABASE_URL: mysql://app:ci-only-password@127.0.0.1:3306/hubex_marketplace_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379/1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Vitest (unit + component + integration) with coverage
+        run: npm run test:coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: error
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: hubex_marketplace_e2e
+          MYSQL_USER: app
+          MYSQL_PASSWORD: ci-only-password
+          MYSQL_ROOT_PASSWORD: ci-only-root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-only-root --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=3s --health-retries=20
+    env:
+      DATABASE_URL: mysql://app:ci-only-password@127.0.0.1:3306/hubex_marketplace_e2e
+      REDIS_URL: redis://127.0.0.1:6379/0
+      E2E_DATABASE_URL: mysql://app:ci-only-password@127.0.0.1:3306/hubex_marketplace_e2e
+      E2E_REDIS_URL: redis://127.0.0.1:6379/2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
