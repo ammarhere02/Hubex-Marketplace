@@ -3,8 +3,7 @@
   "build": { "builder": "RAILPACK" },
   "deploy": {
     "preDeployCommand": ["npx prisma migrate deploy"],
-    "startCommand": "npm start",
-    "healthcheckPath": "/",
+    "startCommand": "sh -c 'if [ \"$SERVICE_ROLE\" = worker ]; then npm run worker; else npm start; fi'",
     "restartPolicyType": "ON_FAILURE"
   }
 }
