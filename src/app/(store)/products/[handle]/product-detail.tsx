@@ -174,7 +174,7 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
   const [imageIndex, setImageIndex] = useState(() => indexOfImage(initial?.imageId) ?? 0);
   const [added, setAdded] = useState(false);
   const [wished, setWished] = useState(false);
-  const [tab, setTab] = useState<"desc" | "details">("desc");
+  const [tab, setTab] = useState<"desc" | "comments" | "rating">("desc");
 
   // Shopify's default single variant has the option "Title: Default Title": hide it.
   const visibleOptions = options.filter((o) => !(o.values.length === 1 && o.values[0] === "Default Title"));
@@ -387,11 +387,20 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "details"}
-                className={`nav-item nav-link ${tab === "details" ? "active" : ""}`}
-                onClick={() => setTab("details")}
+                aria-selected={tab === "comments"}
+                className={`nav-item nav-link ${tab === "comments" ? "active" : ""}`}
+                onClick={() => setTab("comments")}
               >
-                Variants
+                Comments
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "rating"}
+                className={`nav-item nav-link ${tab === "rating" ? "active" : ""}`}
+                onClick={() => setTab("rating")}
+              >
+                Rating
               </button>
             </div>
           </nav>
@@ -403,28 +412,19 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
                 // Merchant-authored HTML from our own Shopify store (synced, not user input).
                 dangerouslySetInnerHTML={{ __html: descriptionHtml || "<p>No description.</p>" }}
               />
+            ) : tab === "comments" ? (
+              <div className="tab-pane fade show active" role="tabpanel">
+                <p className="text-muted mb-0">
+                  <i className="far fa-comments mr-2" />
+                  No comments yet.
+                </p>
+              </div>
             ) : (
               <div className="tab-pane fade show active" role="tabpanel">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Variant</th>
-                      <th>SKU</th>
-                      <th className="text-right">Price</th>
-                      <th className="text-right">Availability</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {variants.map((v) => (
-                      <tr key={v.id} className={v.id === variant?.id ? "table-active" : ""}>
-                        <td>{v.title}</td>
-                        <td>{v.sku}</td>
-                        <td className="text-right">{formatMoney(v.price, currency)}</td>
-                        <td className="text-right">{v.available ? "In stock" : "Sold out"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <p className="text-muted mb-0">
+                  <i className="far fa-star mr-2" />
+                  No ratings yet.
+                </p>
               </div>
             )}
           </div>

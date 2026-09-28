@@ -137,13 +137,14 @@ describe("ProductDetail", () => {
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
   });
 
-  it("switches between Description and Variants tabs", async () => {
+  it("switches between the Description, Comments, and Rating tabs", async () => {
     const user = userEvent.setup();
     render(<ProductDetail {...baseProps()} />);
     expect(screen.getByText("shoe")).toBeInTheDocument(); // rendered HTML description
-    await user.click(screen.getByRole("tab", { name: "Variants" }));
-    expect(screen.getByRole("table")).toBeInTheDocument();
-    expect(screen.getByText("SKU-3")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Comments" }));
+    expect(screen.getByText("No comments yet.")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Rating" }));
+    expect(screen.getByText("No ratings yet.")).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Description" }));
     expect(screen.getByText("shoe")).toBeInTheDocument();
   });

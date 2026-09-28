@@ -366,18 +366,15 @@ a {
 .mm-product-page .btn-group-toggle .btn:hover:not(.active) {
   background-color: #f1f3f5;
 }
-/* Selected option: a filled highlight, not AdminLTE's faint default gray, so
-   the chosen variant is unmistakable. !important overrides
+/* Selected option: the reference's gray active tile (e-commerce.html), with a
+   slightly darker border so the choice still stands out. !important overrides
    .btn-default:not(:disabled).active from the vendored theme. */
 .mm-product-page .btn-group-toggle .btn.active {
-  background-color: #007bff !important;
-  border-color: #007bff !important;
-  color: #fff !important;
+  background-color: #e9ecef !important;
+  border-color: #adb5bd !important;
+  color: #212529 !important;
   box-shadow: none;
   z-index: 2;
-}
-.mm-product-page .btn-group-toggle .btn.active del {
-  color: #fff;
 }
 .mm-product-page .btn-group-toggle .btn:focus-within {
   outline: 2px solid #007bff;

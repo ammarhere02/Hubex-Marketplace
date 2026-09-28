@@ -94,11 +94,12 @@ test.describe("product detail", () => {
     await expect(page.locator("img.product-image")).toHaveAttribute("src", /shoe-b/);
   });
 
-  test("description tab shows merchant HTML; variants tab lists every variant", async ({ page }) => {
+  test("description tab shows merchant HTML; comments and rating tabs render", async ({ page }) => {
     await gotoHydrated(page, "/products/e2e-trail-shoe");
     await expect(page.locator("b", { hasText: "flagship" })).toBeVisible(); // merchant HTML rendered
-    await page.getByRole("tab", { name: "Variants" }).click();
-    await expect(page.getByRole("cell", { name: "E2E-BS" })).toBeVisible();
-    await expect(page.locator("tr", { hasText: "Blue / S" }).getByText("Sold out")).toBeVisible();
+    await page.getByRole("tab", { name: "Comments" }).click();
+    await expect(page.getByText("No comments yet.")).toBeVisible();
+    await page.getByRole("tab", { name: "Rating" }).click();
+    await expect(page.getByText("No ratings yet.")).toBeVisible();
   });
 });
