@@ -94,7 +94,8 @@ test.describe("checkout", () => {
 
     // Confirmation returns WITHOUT waiting for Shopify: pending state shown.
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}/);
-    await expect(page.getByText(/Thank you, Ada!/)).toBeVisible();
+    // Heading role, not text: Next's route announcer live-region duplicates the page title.
+    await expect(page.getByRole("heading", { name: /Thank you, Ada!/ })).toBeVisible();
     await expect(page.getByText("PENDING_SYNC")).toBeVisible();
     await expect(page.getByText(/We are submitting it to the store/)).toBeVisible();
     await expect(page.getByText("1 × Rs 1,100.00")).toBeVisible();
@@ -110,7 +111,7 @@ test.describe("checkout", () => {
     // The confirmation URL survives a refresh (order is server-persisted).
     await page.goBack();
     await page.reload();
-    await expect(page.getByText(/Thank you, Ada!/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Thank you, Ada!/ })).toBeVisible();
   });
 
   test("checkout page without a cart shows only the summary side", async ({ page }) => {
