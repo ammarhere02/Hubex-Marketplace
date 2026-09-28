@@ -1,12 +1,11 @@
 // Browse → filter → paginate → product detail. Read-only against the seeded catalog.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { gotoHydrated, signUp } from "./helpers";
 
-// Dev-mode pages stream + hydrate; wait for the network to settle before
-// interacting so clicks land on hydrated React, not the static shell.
-async function gotoHydrated(page: Page, url: string) {
-  await page.goto(url);
-  await page.waitForLoadState("networkidle");
-}
+// The storefront requires an account: every test signs up first.
+test.beforeEach(async ({ page }) => {
+  await signUp(page);
+});
 
 test.describe("catalog browsing", () => {
   test("home page renders and links into the catalog", async ({ page }) => {

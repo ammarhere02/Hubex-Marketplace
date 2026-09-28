@@ -166,7 +166,13 @@ export type PlaceOrderResult =
  *    as PENDING_SYNC and is picked up by the sweeper (Phase 9); the customer still
  *    gets a confirmation because their order IS recorded.
  */
-export async function placeOrder(cart: CartLineInput[], customer: CustomerInput): Promise<PlaceOrderResult> {
+export async function placeOrder(
+  cart: CartLineInput[],
+  customer: CustomerInput,
+  // Checkout requires a signed-in account (checkoutAction enforces it); optional
+  // here so pre-auth orders and direct callers keep working, stored as NULL.
+  userId?: number,
+): Promise<PlaceOrderResult> {
   const log = logger.child({ component: "checkout" });
 
   const saved = await prisma.$transaction(async (tx) => {
@@ -177,6 +183,7 @@ export async function placeOrder(cart: CartLineInput[], customer: CustomerInput)
       data: {
         publicId: randomUUID(),
         status: "PENDING_SYNC",
+        ...(userId ? { user: { connect: { id: userId } } } : {}),
         ...customer,
         subtotal: priced.subtotal,
         total: priced.subtotal, // no shipping/tax/discounts in this storefront

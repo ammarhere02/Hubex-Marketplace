@@ -99,6 +99,10 @@ model Order {
   // Random, unguessable ID used in the confirmation URL instead of the sequential id.
   publicId         String      @unique @db.VarChar(36)
   status           OrderStatus @default(PENDING_SYNC)
+  // Account that placed the order. Checkout requires login; NULL only for orders
+  // that predate mandatory authentication.
+  userId           Int?
+  user             User?       @relation(fields: [userId], references: [id])
   customerName     String      @db.VarChar(255)
   phone            String      @db.VarChar(32)
   address1         String      @db.VarChar(255)
@@ -204,6 +208,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   sessions Session[]
+  orders   Order[]
 }
 
 // Opaque session tokens: the cookie holds the raw token, MySQL stores its SHA-256

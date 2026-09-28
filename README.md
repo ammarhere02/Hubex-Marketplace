@@ -221,8 +221,20 @@ The scheduled full sync stays in place as a safety net for missed webhooks.
 - **Cart** (`/cart`): add, change quantity, remove, totals.
 - **Checkout** (`/checkout`) → **Confirmation** (`/orders/[id]`).
 
+### Authentication (required for everything)
+
+The whole site sits behind login: the first page any visitor sees is `/login`
+(`/register` to create an account). `src/middleware.ts` validates the session
+cookie against MySQL on every request — a missing, forged or expired session is
+redirected to `/login`, so nothing can be browsed or ordered anonymously. The
+checkout server action re-verifies the session independently and stores the
+order under the account (`Order.userId`). The Shopify webhook endpoint remains
+public because Shopify cannot log in; it is protected by its HMAC signature.
+The env-configured admin (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) signs in through the
+same `/login` page and additionally gets `/admin/queues`.
+
 **Why the cart lives in localStorage:** the cart survives page refreshes and navigation
-without accounts, cookies or server sessions. It stores only `{ variantId, quantity }`,
+per browser without a server round-trip on every change. It stores only `{ variantId, quantity }`,
 because nothing in the browser is trusted. The cart page asks the server to price the
 lines from MySQL, and checkout re-validates everything.
 

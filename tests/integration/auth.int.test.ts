@@ -25,12 +25,13 @@ vi.mock("@/lib/env", async (importOriginal) => {
 });
 
 import { POST as register } from "@/app/api/auth/register/route";
+import { checkoutAction } from "@/app/cart/actions";
 import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
-import { resetDb } from "./helpers";
+import { resetDb, seedProduct } from "./helpers";
 
 const jsonRequest = (body: unknown) =>
   new Request("https://app.example/api/auth/x", {
@@ -124,6 +125,31 @@ describe("auth integration", () => {
     const res = await register(jsonRequest({ name: "Mallory", email: ADMIN_EMAIL, password: "sneaky-pass" }));
     expect(res.status).toBe(409);
     expect(await prisma.user.count({ where: { email: ADMIN_EMAIL } })).toBe(0);
+  });
+
+  it("checkout is refused without a session (server-side, not just UI)", async () => {
+    const p = await seedProduct({ variants: [{ price: "100.00" }] });
+    const form = new FormData();
+    form.set("cart", JSON.stringify([{ variantId: p.variants[0].id, quantity: 1 }]));
+    for (const [k, v] of Object.entries({ customerName: "Ada Lovelace", phone: "03001234567", address1: "12 Model Town", city: "Lahore", zip: "54000", country: "PK", paymentMethod: "COD" })) form.set(k, v);
+    // No session cookie → the action must redirect to login and write nothing.
+    const err = await checkoutAction({}, form).catch((e: Error) => e);
+    expect(String((err as { digest?: string }).digest)).toContain("/login");
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  it("an authenticated checkout stores the order under the account", async () => {
+    await register(jsonRequest(CREDS)); // sets the session cookie in the jar
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: CREDS.email } });
+    const p = await seedProduct({ variants: [{ price: "100.00" }] });
+    const form = new FormData();
+    form.set("cart", JSON.stringify([{ variantId: p.variants[0].id, quantity: 2 }]));
+    for (const [k, v] of Object.entries({ customerName: "Ada Lovelace", phone: "03001234567", address1: "12 Model Town", city: "Lahore", zip: "54000", country: "PK", paymentMethod: "COD" })) form.set(k, v);
+    const err = await checkoutAction({}, form).catch((e: Error) => e);
+    expect(JSON.stringify((err as { digest?: string }).digest ?? err)).toContain("/orders/"); // success redirect
+    const order = await prisma.order.findFirstOrThrow();
+    expect(order.userId).toBe(user.id);
+    expect(order.total.toFixed(2)).toBe("200.00");
   });
 
   it("duplicate registration answers 409", async () => {

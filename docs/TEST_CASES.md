@@ -367,7 +367,7 @@ npm run test:e2e         # Playwright; starts its own dev server on :3105
 ```
 
 Current counts (2026-09-28, all passing, none skipped): unit 150 · component 62
-· integration 49 · e2e 36 (18 scenarios × chromium/mobile, minus 2 desktop-only
+· integration 51 · e2e 42 (21 scenarios × chromium/mobile, minus 2 desktop-only
 run once each). Coverage (Vitest projects combined; e2e does not contribute):
 statements 79.09%, branches 70.28%, functions 70.91%, lines 79.46% across 60
 `src/**` files, including files no test imports.

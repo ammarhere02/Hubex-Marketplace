@@ -3,6 +3,7 @@
 // browser, so everything is parsed with zod before use.
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getSessionUser } from "@/lib/auth/session";
 import { cartLinesSchema, customerSchema, placeOrder, priceCart, type LineProblem } from "@/lib/checkout";
 
 export interface CartQuote {
@@ -56,6 +57,11 @@ const CUSTOMER_FIELDS = [
 ] as const;
 
 export async function checkoutAction(_prev: CheckoutState, formData: FormData): Promise<CheckoutState> {
+  // Ordering requires an account. Enforced HERE (server), not just in the page:
+  // a crafted request without a session must never create an order.
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/checkout");
+
   let cartJson: unknown;
   try {
     cartJson = JSON.parse(String(formData.get("cart") ?? "[]"));
@@ -69,7 +75,7 @@ export async function checkoutAction(_prev: CheckoutState, formData: FormData): 
   const customer = customerSchema.safeParse(values);
   if (!customer.success) return { fieldErrors: z.flattenError(customer.error).fieldErrors, values };
 
-  const result = await placeOrder(cart.data, customer.data);
+  const result = await placeOrder(cart.data, customer.data, user.id);
   if (!result.ok) {
     return {
       formError: "Some items changed since you added them. Review your cart.",

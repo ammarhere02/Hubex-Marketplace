@@ -10,22 +10,22 @@ component + integration, run together). Detailed scenario-by-scenario inventory:
 |---|---|---:|---|---|
 | unit | Vitest `--project unit` | 150 | ✅ all pass | yes |
 | component | Vitest `--project component` (jsdom) | 62 | ✅ all pass | yes |
-| integration | Vitest `--project integration` (real MySQL + Redis) | 49 | ✅ all pass | yes |
-| e2e | Playwright (chromium + Pixel-7 mobile) | 36 | ✅ all pass | **no** — runs against a separate dev server process |
-| **Total** | | **297** | **297 passed · 0 failed · 0 skipped** | |
+| integration | Vitest `--project integration` (real MySQL + Redis) | 51 | ✅ all pass | yes |
+| e2e | Playwright (chromium + Pixel-7 mobile) | 42 | ✅ all pass | **no** — runs against a separate dev server process |
+| **Total** | | **305** | **305 passed · 0 failed · 0 skipped** | |
 
 Only the three Vitest suites produce the numbers below; pages exercised solely
 in the browser by Playwright therefore show 0% here even though they are
 functionally tested (marked *e2e* in the tables).
 
-## Overall coverage (60 measured `src/**` files, including files no test imports)
+## Overall coverage (61 measured `src/**` files, including files no test imports)
 
 | Metric | Coverage | Covered / total |
 |---|---:|---:|
-| Statements | **81.93%** | 780 / 952 |
-| Branches | **74.68%** | 475 / 636 |
-| Functions | **72.11%** | 181 / 251 |
-| Lines | **82.48%** | 683 / 828 |
+| Statements | **81.82%** | 797 / 974 |
+| Branches | **75.00%** | 486 / 648 |
+| Functions | **72.33%** | 183 / 253 |
+| Lines | **82.48%** | 697 / 845 |
 
 Artifacts: `coverage/index.html` (browsable), `coverage/lcov.info`,
 `coverage/coverage-summary.json`. Regenerate with `npm run test:coverage`.
@@ -79,7 +79,8 @@ helpers execute under coverage. The real calls are verified manually via
 | api/auth/logout/route.ts | 100 | 100 | 100 | 100 | unit, integration |
 | api/auth/me/route.ts | 100 | 100 | 100 | 100 | unit |
 | admin/queues/[[...path]]/route.ts | 100 | 100 | 100 | 100 | unit, integration, e2e |
-| cart/actions.ts (server actions) | **0** | 0 | 0 | 0 | see note ② |
+| cart/actions.ts (server actions) | partial | — | — | — | integration (auth gate + authenticated checkout), e2e; see note ② |
+| middleware.ts (site-wide auth gate) | — | — | — | — | e2e (redirects, forged-cookie rejection); runs in Next's edge sandbox, outside Vitest |
 
 ② `checkoutAction`/`quoteCart` are thin wrappers over `lib/checkout.ts` (100%);
 component tests mock them and only e2e drives them end to end (full checkout

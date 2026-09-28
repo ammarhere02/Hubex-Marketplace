@@ -1,15 +1,40 @@
 // Auth journeys: register → signed-in header → logout; login errors; and the
 // admin-gated queue dashboard (redirect for anonymous, board for the admin).
 // The admin credentials come from tests/e2e/env.ts.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const ADMIN_EMAIL = "admin@e2e.test";
 const ADMIN_PASSWORD = "admin-secret-123";
 
-async function gotoHydrated(page: Page, url: string) {
-  await page.goto(url);
-  await page.waitForLoadState("networkidle");
-}
+import { gotoHydrated, signUp } from "./helpers";
+
+test.describe("site-wide authentication gate", () => {
+  test("the first page is authentication: every route redirects guests to /login", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto("/products");
+    await expect(page).toHaveURL(/\/login\?next=%2Fproducts/);
+    await page.goto("/products/e2e-trail-shoe");
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto("/cart");
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto("/checkout");
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("a forged session cookie does not bypass the gate", async ({ page, context }) => {
+    await context.addCookies([{ name: "hubex_session", value: "forged-token-123", url: "http://localhost:3105" }]);
+    await page.goto("/products");
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("after signing up the storefront opens and deep links work", async ({ page }) => {
+    await signUp(page);
+    await page.goto("/products");
+    await expect(page).toHaveURL(/\/products/);
+    await expect(page.locator(".mm-card").first()).toBeVisible();
+  });
+});
 
 test.describe("customer accounts", () => {
   test("register, see the account in the header, then log out", async ({ page }) => {
