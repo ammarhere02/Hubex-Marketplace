@@ -263,27 +263,39 @@ a {
   object-fit: cover;
 }
 
-/* ---------- product detail (e-commerce.html) ---------- */
-.mm-content .product-image {
-  border-radius: 12px;
-  background: var(--mm-tile);
-  aspect-ratio: 1;
-  object-fit: contain;
+/* ---------- product detail (e-commerce.html) ----------
+   Source of truth is the stock AdminLTE 3.2.0 e-commerce page: no theme recoloring
+   here — stock fonts, stock gray active option buttons, stock bootstrap primary. */
+.mm-content .card-solid {
+  font-family: "Source Sans Pro", -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+.mm-content .card-solid .btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.mm-content .card-solid .btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+.mm-content .card-solid a {
+  color: #007bff;
+}
+.mm-content .card-solid .text-gray,
+.mm-content .card-solid .text-gray:hover {
+  color: #6c757d;
+}
+/* Thumbnails are <button>s so React owns selection; reset chrome so the stock
+   .product-image-thumb border/hover styling from adminlte.css applies untouched. */
 .mm-content .product-image-thumb {
   cursor: pointer;
-  background: var(--mm-tile);
-}
-.mm-content .product-image-thumb.active {
-  border-color: var(--mm-blue);
-}
-.mm-content .btn-group-toggle .btn.active {
-  background: var(--mm-blue);
-  border-color: var(--mm-blue);
-  color: #fff;
+  background: #fff;
+  appearance: none;
 }
 .mm-content .btn-group-toggle {
   flex-wrap: wrap;
+}
+.mm-content .product-share a {
+  margin-right: 0.5rem;
 }
 .mm-content .product-desc img {
   max-width: 100%;
@@ -437,17 +449,14 @@ a {
 .mm-content .btn-group-toggle .btn {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+/* Option swatch below its label, like the color dots in e-commerce.html. */
 .mm-swatch {
-  width: 28px;
-  height: 28px;
+  width: 2em;
+  height: 2em;
   object-fit: cover;
-  border-radius: 6px;
-  margin-right: 6px;
-  vertical-align: middle;
+  border-radius: 50%;
+  margin-top: 4px;
   background: #fff;
-}
-.mm-content .btn-group-toggle .btn.mm-has-swatch {
-  padding: 4px 10px 4px 4px;
 }
 .mm-toast {
   animation: mm-enter 0.25s ease both;

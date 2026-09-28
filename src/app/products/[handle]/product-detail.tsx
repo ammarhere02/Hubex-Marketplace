@@ -3,7 +3,6 @@
 // Same markup/classes (product-image, product-image-thumbs, btn-group-toggle,
 // bg-gray price box, nav-tabs), but React owns the behaviour: gallery selection,
 // option selectors → variant, price/stock, Add to Cart, tabs. No jQuery/Bootstrap JS.
-// Wishlist, share icons and the Comments/Rating tabs are omitted: no backing data.
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { cart } from "@/app/cart/cart-store";
@@ -24,6 +23,8 @@ export interface DetailVariant {
 export interface DetailProps {
   title: string;
   descriptionHtml: string;
+  /** Plain-text excerpt shown under the title, like the lead paragraph in e-commerce.html. */
+  descriptionText: string;
   currency: string;
   images: Array<{ id: number; url: string; altText: string | null }>;
   options: Array<{ name: string; values: string[] }>;
@@ -33,7 +34,7 @@ export interface DetailProps {
 const matches = (v: DetailVariant, selected: Record<string, string>) =>
   Object.entries(selected).every(([name, value]) => v.options[name] === value);
 
-export function ProductDetail({ title, descriptionHtml, currency, images, options, variants }: DetailProps) {
+export function ProductDetail({ title, descriptionHtml, descriptionText, currency, images, options, variants }: DetailProps) {
   const initial = variants.find((v) => v.available) ?? variants[0];
   const indexOfImage = (imageId: number | null | undefined) => {
     const i = images.findIndex((img) => img.id === imageId);
@@ -41,8 +42,8 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
   };
   const [selected, setSelected] = useState<Record<string, string>>(initial?.options ?? {});
   const [imageIndex, setImageIndex] = useState(() => indexOfImage(initial?.imageId) ?? 0);
-  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [wished, setWished] = useState(false);
   const [tab, setTab] = useState<"desc" | "details">("desc");
 
   // Shopify's default single variant has the option "Title: Default Title": hide it.
@@ -78,7 +79,6 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
 
   const main = images[imageIndex];
   const canBuy = Boolean(variant?.available);
-  const maxQty = variant && variant.stock > 0 ? Math.min(99, variant.stock) : 99;
 
   return (
     <div className="card card-solid">
@@ -117,11 +117,11 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
 
           <div className="col-12 col-sm-6">
             <h3 className="my-3">{title}</h3>
-            {variant?.sku && <p className="text-muted mb-0">SKU: {variant.sku}</p>}
+            {descriptionText && <p>{descriptionText}</p>}
             <hr />
 
             {visibleOptions.map((o) => (
-              <div key={o.name} className="mb-3">
+              <div key={o.name}>
                 <h4 className="mt-3">
                   {o.name} <small>Please select one</small>
                 </h4>
@@ -133,7 +133,7 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
                     return (
                       <label
                         key={value}
-                        className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"} ${swatch ? "mm-has-swatch" : ""}`}
+                        className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"}`}
                         title={possible ? undefined : "Sold out in this combination"}
                       >
                         <input
@@ -143,11 +143,14 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
                           checked={active}
                           onChange={() => choose(o.name, value)}
                         />
-                        {swatch && (
-                          // eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs
-                          <img src={swatch.url} alt="" className="mm-swatch" />
-                        )}
                         {possible ? value : <del>{value}</del>}
+                        {swatch && (
+                          <>
+                            <br />
+                            {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs */}
+                            <img src={swatch.url} alt="" className="mm-swatch" />
+                          </>
+                        )}
                       </label>
                     );
                   })}
@@ -175,29 +178,27 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
               </h4>
             </div>
 
-            <div className="mt-4 d-flex align-items-center flex-wrap" style={{ gap: 8 }}>
-              <input
-                type="number"
-                className="form-control form-control-lg"
-                style={{ width: 90 }}
-                min={1}
-                max={maxQty}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(maxQty, Number(e.target.value) || 1)))}
-                aria-label="Quantity"
-              />
+            <div className="mt-4">
               <button
                 type="button"
                 className="btn btn-primary btn-lg btn-flat"
                 disabled={!canBuy}
                 onClick={() => {
                   if (!variant) return;
-                  cart.add(variant.id, quantity);
+                  cart.add(variant.id, 1);
                   setAdded(true);
                 }}
               >
                 <i className="fas fa-cart-plus fa-lg mr-2" />
                 {canBuy ? "Add to Cart" : "Sold out"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-default btn-lg btn-flat"
+                onClick={() => setWished((w) => !w)}
+              >
+                <i className={`fa-lg mr-2 ${wished ? "fas fa-heart text-danger" : "fas fa-heart"}`} />
+                {wished ? "In Wishlist" : "Add to Wishlist"}
               </button>
             </div>
             {added && (
@@ -206,6 +207,21 @@ export function ProductDetail({ title, descriptionHtml, currency, images, option
                 Added to your cart. <Link href="/cart">View cart</Link>
               </div>
             )}
+
+            <div className="mt-4 product-share">
+              <a href="#" className="text-gray" aria-label="Share on Facebook" onClick={(e) => e.preventDefault()}>
+                <i className="fab fa-facebook-square fa-2x" />
+              </a>
+              <a href="#" className="text-gray" aria-label="Share on Twitter" onClick={(e) => e.preventDefault()}>
+                <i className="fab fa-twitter-square fa-2x" />
+              </a>
+              <a href="#" className="text-gray" aria-label="Share by email" onClick={(e) => e.preventDefault()}>
+                <i className="fas fa-envelope-square fa-2x" />
+              </a>
+              <a href="#" className="text-gray" aria-label="RSS" onClick={(e) => e.preventDefault()}>
+                <i className="fas fa-rss-square fa-2x" />
+              </a>
+            </div>
           </div>
         </div>
 
