@@ -19,9 +19,14 @@
     "sync:products": "tsx scripts/sync-products.ts"
   },
   "dependencies": {
+    "@bull-board/api": "^9.10.1",
+    "@bull-board/hono": "^9.10.1",
+    "@bull-board/ui": "^9.10.1",
+    "@hono/node-server": "^2.1.1",
     "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bullmq": "^6.3.9",
+    "hono": "^4.13.10",
     "ioredis": "^6.0.0",
     "libphonenumber-js": "^1.13.14",
     "next": "16.3.6",
