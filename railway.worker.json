@@ -3,8 +3,7 @@
   "build": { "builder": "RAILPACK" },
   "deploy": {
     "preDeployCommand": ["npx prisma migrate deploy"],
-    "startCommand": "npm start",
-    "healthcheckPath": "/",
-    "restartPolicyType": "ON_FAILURE"
+    "startCommand": "npm run worker",
+    "restartPolicyType": "ALWAYS"
   }
 }

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Placeholders only: the build never connects to MySQL, Redis or Shopify.
+    env:
+      DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/ci
+      REDIS_URL: redis://127.0.0.1:6379
+      SHOPIFY_SHOP: ci-placeholder
+      SHOPIFY_CLIENT_ID: ci-placeholder
+      SHOPIFY_CLIENT_SECRET: ci-placeholder
+      SHOPIFY_API_VERSION: 2026-07
+      SHOP_CURRENCY: PKR
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
