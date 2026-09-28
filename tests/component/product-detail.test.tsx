@@ -155,6 +155,46 @@ describe("ProductDetail", () => {
     expect(screen.getByText("Rs 1,500.00").tagName).toBe("DEL");
   });
 
+  it("renders color values as name + colored circle under an 'Available Colors' heading", () => {
+    render(<ProductDetail {...baseProps()} />);
+    expect(screen.getByRole("heading", { name: "Available Colors" })).toBeInTheDocument();
+    const colorGroup = screen.getByRole("radiogroup", { name: "Color" });
+    const circles = colorGroup.querySelectorAll("i.fas.fa-circle.fa-2x");
+    expect(circles).toHaveLength(2);
+    expect((circles[0] as HTMLElement).style.color).toBe("red");
+    expect((circles[1] as HTMLElement).style.color).toBe("blue");
+  });
+
+  it("renders size values as a large abbreviation with the full label underneath", () => {
+    const props = baseProps();
+    props.options = [
+      { name: "Color", values: ["Red", "Blue"] },
+      { name: "Size", values: ["Small", "Medium"] },
+    ];
+    props.variants = [
+      v(1, { Color: "Red", Size: "Small" }, { imageId: 11 }),
+      v(2, { Color: "Red", Size: "Medium" }),
+      v(3, { Color: "Blue", Size: "Small" }, { available: false, stock: 0, imageId: 12 }),
+    ];
+    render(<ProductDetail {...props} />);
+    expect(screen.getByRole("heading", { name: /Size Please select one/ })).toBeInTheDocument();
+    const sizeGroup = screen.getByRole("radiogroup", { name: "Size" });
+    const big = sizeGroup.querySelectorAll("span.text-xl");
+    expect([...big].map((s) => s.textContent)).toEqual(["S", "M"]);
+    expect(within(sizeGroup).getByText("Small")).toBeInTheDocument();
+    expect(within(sizeGroup).getByText("Medium")).toBeInTheDocument();
+  });
+
+  it("falls back to a plain text tile for a color value it cannot map", () => {
+    const props = baseProps();
+    props.options = [{ name: "Color", values: ["Zebra Print"] }];
+    props.variants = [v(1, { Color: "Zebra Print" })];
+    render(<ProductDetail {...props} />);
+    const group = screen.getByRole("radiogroup", { name: "Color" });
+    expect(within(group).getByText("Zebra Print")).toBeInTheDocument();
+    expect(group.querySelector("i.fa-circle")).toBeNull();
+  });
+
   it("renders a placeholder and 'Unavailable' when the product has no images or variants", () => {
     render(<ProductDetail {...baseProps()} images={[]} options={[]} variants={[]} />);
     expect(screen.getByText("Unavailable")).toBeInTheDocument();

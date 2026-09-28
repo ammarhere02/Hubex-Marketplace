@@ -34,6 +34,81 @@ export interface DetailProps {
 const matches = (v: DetailVariant, selected: Record<string, string>) =>
   Object.entries(selected).every(([name, value]) => v.options[name] === value);
 
+// e-commerce.html renders Color values as a name over a colored circle and Size
+// values as a large abbreviation over the full label. Shopify option values are
+// free text, so both mappings are best-effort with a plain-text fallback.
+const CSS_COLOR_KEYWORDS = new Set([
+  "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink",
+  "brown", "gray", "grey", "navy", "teal", "maroon", "olive", "beige", "tan",
+  "gold", "silver", "ivory", "khaki", "lavender", "magenta", "cyan", "turquoise",
+  "coral", "salmon", "crimson", "indigo", "violet", "plum", "orchid", "chocolate",
+  "sienna", "aqua", "lime", "fuchsia", "azure", "linen", "snow", "wheat", "peru",
+  "lightblue", "lightgreen", "lightgray", "lightgrey", "lightpink", "lightyellow",
+  "lightcyan", "lightsalmon", "lightcoral", "darkblue", "darkgreen", "darkgray",
+  "darkgrey", "darkred", "darkorange", "darkviolet", "darkcyan", "darkmagenta",
+  "skyblue", "steelblue", "royalblue", "slategray", "slategrey", "hotpink",
+  "deeppink", "forestgreen", "seagreen", "springgreen", "olivedrab", "firebrick",
+  "tomato", "orangered", "goldenrod", "rosybrown", "saddlebrown", "midnightblue",
+]);
+const CUSTOM_COLORS: Record<string, string> = {
+  charcoal: "#36454f",
+  cream: "#fffdd0",
+  offwhite: "#faf9f6",
+  burgundy: "#800020",
+  mint: "#98ff98",
+  mustard: "#ffdb58",
+  rust: "#b7410e",
+  denim: "#1560bd",
+  sand: "#c2b280",
+  camel: "#c19a6b",
+  blush: "#de5d83",
+  emerald: "#50c878",
+  sapphire: "#0f52ba",
+  ruby: "#e0115f",
+  rose: "#ff007f",
+  peach: "#ffe5b4",
+  taupe: "#483c32",
+  mauve: "#e0b0ff",
+  bronze: "#cd7f32",
+  copper: "#b87333",
+};
+
+/** CSS color for an option value like "Blue" or "Light Blue", or null when unknown. */
+export function cssColorFor(value: string): string | null {
+  const key = value.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  if (CUSTOM_COLORS[key]) return CUSTOM_COLORS[key];
+  if (CSS_COLOR_KEYWORDS.has(key)) return key;
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim())) return value.trim();
+  return null;
+}
+
+const SIZE_ABBREVIATIONS: Record<string, string> = {
+  "extra small": "XS",
+  "x-small": "XS",
+  "xtra small": "XS",
+  small: "S",
+  medium: "M",
+  large: "L",
+  "extra large": "XL",
+  "x-large": "XL",
+  "xtra large": "XL",
+  "xtra-large": "XL",
+  "2x-large": "XXL",
+  "xx-large": "XXL",
+  "2xl": "XXL",
+  "3x-large": "XXXL",
+  "xxx-large": "XXXL",
+};
+
+/** Short size label ("Medium" → "M", "38" → "38"), or null when there is no sensible one. */
+export function sizeAbbreviation(value: string): string | null {
+  const key = value.trim().toLowerCase().replace(/\s+/g, " ");
+  if (SIZE_ABBREVIATIONS[key]) return SIZE_ABBREVIATIONS[key];
+  const trimmed = value.trim();
+  if (trimmed.length > 0 && trimmed.length <= 4) return trimmed.toUpperCase();
+  return null;
+}
+
 export function ProductDetail({ title, descriptionHtml, descriptionText, currency, images, options, variants }: DetailProps) {
   const initial = variants.find((v) => v.available) ?? variants[0];
   const indexOfImage = (imageId: number | null | undefined) => {
@@ -120,43 +195,78 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
             {descriptionText && <p>{descriptionText}</p>}
             <hr />
 
-            {visibleOptions.map((o) => (
-              <div key={o.name}>
-                <h4 className="mt-3">
-                  {o.name} <small>Please select one</small>
-                </h4>
-                <div className="btn-group btn-group-toggle" role="radiogroup" aria-label={o.name}>
-                  {o.values.map((value) => {
-                    const active = selected[o.name] === value;
-                    const possible = isPossible(o.name, value);
-                    const swatch = swatchFor(o.name, value);
-                    return (
-                      <label
-                        key={value}
-                        className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"}`}
-                        title={possible ? undefined : "Sold out in this combination"}
-                      >
-                        <input
-                          type="radio"
-                          name={`option-${o.name}`}
-                          autoComplete="off"
-                          checked={active}
-                          onChange={() => choose(o.name, value)}
-                        />
-                        {possible ? value : <del>{value}</del>}
-                        {swatch && (
-                          <>
-                            <br />
-                            {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs */}
-                            <img src={swatch.url} alt="" className="mm-swatch" />
-                          </>
-                        )}
-                      </label>
-                    );
-                  })}
+            {visibleOptions.map((o) => {
+              const colorLike = /colou?r/i.test(o.name);
+              const sizeLike = /\bsize\b/i.test(o.name);
+              return (
+                <div key={o.name}>
+                  <h4 className="mt-3">
+                    {colorLike ? (
+                      `Available ${o.name}s`
+                    ) : (
+                      <>
+                        {o.name} <small>Please select one</small>
+                      </>
+                    )}
+                  </h4>
+                  <div className="btn-group btn-group-toggle" role="radiogroup" aria-label={o.name}>
+                    {o.values.map((value) => {
+                      const active = selected[o.name] === value;
+                      const possible = isPossible(o.name, value);
+                      const circleColor = colorLike ? cssColorFor(value) : null;
+                      const abbrev = sizeLike ? sizeAbbreviation(value) : null;
+                      const swatch = circleColor || abbrev ? null : swatchFor(o.name, value);
+                      const text = possible ? value : <del>{value}</del>;
+                      return (
+                        <label
+                          key={value}
+                          className={`btn btn-default text-center ${active ? "active" : ""} ${possible ? "" : "text-muted"}`}
+                          title={possible ? undefined : "Sold out in this combination"}
+                        >
+                          <input
+                            type="radio"
+                            name={`option-${o.name}`}
+                            autoComplete="off"
+                            checked={active}
+                            onChange={() => choose(o.name, value)}
+                          />
+                          {circleColor ? (
+                            // e-commerce.html color tile: name over a colored circle.
+                            <>
+                              {text}
+                              <br />
+                              <i className="fas fa-circle fa-2x" style={{ color: circleColor }} aria-hidden="true" />
+                            </>
+                          ) : abbrev ? (
+                            // e-commerce.html size tile: big abbreviation over the full label.
+                            <>
+                              <span className="text-xl">{possible ? abbrev : <del>{abbrev}</del>}</span>
+                              {abbrev.toLowerCase() !== value.trim().toLowerCase() && (
+                                <>
+                                  <br />
+                                  {text}
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {text}
+                              {swatch && (
+                                <>
+                                  <br />
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs */}
+                                  <img src={swatch.url} alt="" className="mm-swatch" />
+                                </>
+                              )}
+                            </>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="bg-gray py-2 px-3 mt-4">
               <h2 className="mb-0">{variant ? formatMoney(variant.price, currency) : "Unavailable"}</h2>
