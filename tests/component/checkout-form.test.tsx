@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CheckoutState } from "@/app/cart/actions";
-import { cart } from "@/app/cart/cart-store";
+import type { CheckoutState } from "@/app/(store)/cart/actions";
+import { cart } from "@/app/(store)/cart/cart-store";
 
 const checkoutAction = vi.hoisted(() => vi.fn());
-vi.mock("@/app/cart/actions", () => ({ checkoutAction }));
+vi.mock("@/app/(store)/cart/actions", () => ({ checkoutAction }));
 
-import { CheckoutForm } from "@/app/checkout/checkout-form";
+import { CheckoutForm } from "@/app/(store)/checkout/checkout-form";
 
 beforeEach(() => {
   localStorage.clear();

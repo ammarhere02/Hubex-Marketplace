@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CartQuote } from "@/app/cart/actions";
-import { cart } from "@/app/cart/cart-store";
+import type { CartQuote } from "@/app/(store)/cart/actions";
+import { cart } from "@/app/(store)/cart/cart-store";
 
 const quoteCart = vi.hoisted(() => vi.fn());
-vi.mock("@/app/cart/actions", () => ({ quoteCart }));
+vi.mock("@/app/(store)/cart/actions", () => ({ quoteCart }));
 
-import { CartView } from "@/app/cart/cart-view";
+import { CartView } from "@/app/(store)/cart/cart-view";
 
 const quote = (over: Partial<CartQuote> = {}): CartQuote => ({
   lines: [

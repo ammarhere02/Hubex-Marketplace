@@ -25,7 +25,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
 });
 
 import { POST as register } from "@/app/api/auth/register/route";
-import { checkoutAction } from "@/app/cart/actions";
+import { checkoutAction } from "@/app/(store)/cart/actions";
 import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth/session";

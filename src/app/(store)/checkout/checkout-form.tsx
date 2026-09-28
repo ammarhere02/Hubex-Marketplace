@@ -2,8 +2,8 @@
 // Checkout form. Sends the cart (IDs + quantities) and customer fields to the
 // server action; the server validates everything again and decides the prices.
 import { useActionState } from "react";
-import { checkoutAction, type CheckoutState } from "@/app/cart/actions";
-import { useCart } from "@/app/cart/cart-store";
+import { checkoutAction, type CheckoutState } from "@/app/(store)/cart/actions";
+import { useCart } from "@/app/(store)/cart/cart-store";
 
 interface Field {
   name: string;

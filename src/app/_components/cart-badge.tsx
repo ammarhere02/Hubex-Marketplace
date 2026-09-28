@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCart } from "@/app/cart/cart-store";
+import { useCart } from "@/app/(store)/cart/cart-store";
 
 export function CartBadge() {
   const count = useCart().reduce((n, l) => n + l.quantity, 0);

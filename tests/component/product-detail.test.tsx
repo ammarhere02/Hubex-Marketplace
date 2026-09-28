@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ProductDetail, type DetailProps, type DetailVariant } from "@/app/products/[handle]/product-detail";
-import { cart } from "@/app/cart/cart-store";
+import { ProductDetail, type DetailProps, type DetailVariant } from "@/app/(store)/products/[handle]/product-detail";
+import { cart } from "@/app/(store)/cart/cart-store";
 
 const v = (
   id: number,

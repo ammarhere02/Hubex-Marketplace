@@ -19,7 +19,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   };
 });
 
-import { GET } from "@/app/admin/queues/[[...path]]/route";
+import { GET } from "@/app/(store)/admin/queues/[[...path]]/route";
 
 const req = (path = "/admin/queues") => new Request(`https://app.example${path}`);
 

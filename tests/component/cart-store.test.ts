@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cart, useCart } from "@/app/cart/cart-store";
+import { cart, useCart } from "@/app/(store)/cart/cart-store";
 
 const KEY = "hubex-cart-v1";
 const stored = () => JSON.parse(localStorage.getItem(KEY) ?? "[]");

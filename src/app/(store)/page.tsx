@@ -2,7 +2,7 @@
 // Every product/category shown comes from MySQL; the banner is static copy.
 import Link from "next/link";
 import { connection } from "next/server";
-import { ProductCard, SectionTitle } from "./_components/product-card";
+import { ProductCard, SectionTitle } from "@/app/_components/product-card";
 import { listCategories, listDeals, listProducts } from "@/lib/catalog";
 import { env } from "@/lib/env";
 

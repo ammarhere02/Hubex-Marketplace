@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { ProductCard as Card } from "@/lib/catalog";
 import { CartBadge } from "@/app/_components/cart-badge";
 import { ProductCard, SectionTitle } from "@/app/_components/product-card";
-import { ClearCart } from "@/app/orders/[publicId]/clear-cart";
-import { cart } from "@/app/cart/cart-store";
+import { ClearCart } from "@/app/(store)/orders/[publicId]/clear-cart";
+import { cart } from "@/app/(store)/cart/cart-store";
 
 beforeEach(() => {
   localStorage.clear();

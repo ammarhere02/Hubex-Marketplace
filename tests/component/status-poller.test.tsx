@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const refresh = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
-import { StatusPoller } from "@/app/orders/[publicId]/status-poller";
+import { StatusPoller } from "@/app/(store)/orders/[publicId]/status-poller";
 
 beforeEach(() => {
   refresh.mockClear();

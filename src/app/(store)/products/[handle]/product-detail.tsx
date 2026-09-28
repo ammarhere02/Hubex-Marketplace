@@ -5,7 +5,7 @@
 // option selectors → variant, price/stock, Add to Cart, tabs. No jQuery/Bootstrap JS.
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { cart } from "@/app/cart/cart-store";
+import { cart } from "@/app/(store)/cart/cart-store";
 import { formatMoney } from "@/lib/money";
 
 export interface DetailVariant {

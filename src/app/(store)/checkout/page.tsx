@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SectionTitle } from "@/app/_components/product-card";
-import { CartView } from "@/app/cart/cart-view";
+import { CartView } from "@/app/(store)/cart/cart-view";
 import { CheckoutForm } from "./checkout-form";
 
 export default function CheckoutPage() {
