@@ -1,9 +1,10 @@
 // Whole-site authentication gate: every page and API requires a signed-in
-// account. The session cookie is VALIDATED against the database on each
-// request (via the auth API — middleware has no direct DB access), so a forged
-// or expired cookie cannot bypass the gate. Deeper checks still apply behind
-// it: checkout re-verifies the session, and /admin/queues re-checks the admin
-// role server-side.
+// account. Next.js 16 renamed the `middleware.ts` convention to `proxy.ts`
+// (exporting `proxy`) — the old filename is silently ignored, which left the
+// site wide open. The session cookie is VALIDATED against the database on each
+// request (via the auth API), so a forged or expired cookie cannot bypass the
+// gate. Deeper checks still apply behind it: checkout re-verifies the session,
+// and /admin/queues re-checks the admin role server-side.
 //
 // Public: /login, /register, the auth API itself, and the Shopify webhook
 // (machine-to-machine, protected by its HMAC signature — Shopify cannot log in).
@@ -12,7 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = [/^\/login$/, /^\/register$/, /^\/api\/auth\//, /^\/api\/webhooks\//];
 const SESSION_COOKIE = "hubex_session"; // keep in sync with src/lib/auth/session.ts
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (PUBLIC_PATHS.some((p) => p.test(pathname))) return NextResponse.next();
 
