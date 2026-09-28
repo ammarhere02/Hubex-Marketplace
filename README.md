@@ -14,6 +14,7 @@ background as unpaid COD orders, with retries and duplicate protection.
 
 The design reasoning (queues, sync, idempotency, trade-offs) is in
 [docs/design-note.md](docs/design-note.md).
+The reviewer-facing documentation index is [docs/SUBMISSION.md](docs/SUBMISSION.md).
 
 ---
 
@@ -322,10 +323,10 @@ docs/                   design note, screenshots
 
 ---
 
-## Screenshots
+## Demo evidence
 
-The full flow is in [`docs/screenshots/`](docs/screenshots/): listing → product detail →
-cart → checkout → confirmation (pending → synced) → the order in Shopify admin.
+The full-flow screenshot or recording is pending. See [docs/VERIFICATION.md](docs/VERIFICATION.md)
+for the evidence checklist and [docs/SUBMISSION.md](docs/SUBMISSION.md) for the submission index.
 
 ---
 
