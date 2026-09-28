@@ -34,6 +34,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(data?.error ?? "Something went wrong. Please try again.");
         return;
       }
+      // Return to where the visitor was sent from (e.g. /admin/queues), but only
+      // accept a same-site path — never an absolute URL — to avoid open redirects.
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        window.location.assign(next);
+        return;
+      }
       router.push("/");
       router.refresh();
     } catch {

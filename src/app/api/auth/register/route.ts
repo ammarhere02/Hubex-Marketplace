@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/passport";
 import { createSession } from "@/lib/auth/session";
@@ -18,7 +19,12 @@ export async function POST(request: Request) {
   }
   const { name, email, password } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  // The admin identity is env-owned (isAdmin matches on email); letting the
+  // public register it would hand them the queue dashboard. Answer as if taken.
+  const existing =
+    email === env().ADMIN_EMAIL
+      ? { id: 0 }
+      : await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
     return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
   }

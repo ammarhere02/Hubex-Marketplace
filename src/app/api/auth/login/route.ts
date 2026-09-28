@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { authenticateAdmin } from "@/lib/auth/admin";
 import { authenticateLocal } from "@/lib/auth/passport";
 import { createSession } from "@/lib/auth/session";
 import { logger } from "@/lib/logger";
@@ -15,7 +16,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input." }, { status: 400 });
   }
 
-  const user = await authenticateLocal(parsed.data.email, parsed.data.password);
+  // Env-configured admin first (upserts its User row), then normal DB users.
+  const user =
+    (await authenticateAdmin(parsed.data.email, parsed.data.password)) ??
+    (await authenticateLocal(parsed.data.email, parsed.data.password));
   if (!user) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
