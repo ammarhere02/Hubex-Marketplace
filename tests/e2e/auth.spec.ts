@@ -47,7 +47,10 @@ test.describe("customer accounts", () => {
 
     await expect(page.getByText("Grace Hopper")).toBeVisible(); // header shows the session
     await page.getByRole("button", { name: /Sign out|Logout|Log out/i }).click();
-    await expect(page.getByRole("link", { name: /Sign in/ })).toBeVisible();
+    // Logging out drops the session, so the gate sends the visitor to the
+    // chrome-free login page (no storefront header on auth screens).
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByText("Sign in to start your session")).toBeVisible();
   });
 
   test("login rejects wrong credentials with a visible error", async ({ page }) => {
