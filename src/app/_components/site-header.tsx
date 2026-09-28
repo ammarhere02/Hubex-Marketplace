@@ -1,13 +1,8 @@
-// Header: welcome strip, brand + cart, and a category bar built from synced productTypes.
+// Header: welcome strip, brand, and nav links. Category filters live on /products.
 import Link from "next/link";
-import { connection } from "next/server";
-import { listCategories } from "@/lib/catalog";
 import { CartBadge } from "./cart-badge";
 
-export async function SiteHeader() {
-  await connection(); // categories come from the latest sync
-  const categories = await listCategories();
-
+export function SiteHeader() {
   return (
     <header>
       <div className="mm-topbar">
@@ -21,10 +16,14 @@ export async function SiteHeader() {
       <nav className="main-header navbar navbar-expand navbar-white navbar-light mm-navbar">
         <div className="container">
           <Link href="/" className="navbar-brand mm-brand">
-            <i className="fas fa-bars mr-3" aria-hidden />
             Hubex Market
           </Link>
           <ul className="navbar-nav ml-auto">
+            <li className="nav-item">
+              <Link href="/" className="nav-link">
+                <i className="fas fa-home mr-1" /> Home
+              </Link>
+            </li>
             <li className="nav-item">
               <Link href="/products" className="nav-link">
                 <i className="fas fa-th-large mr-1" /> All products
@@ -36,20 +35,6 @@ export async function SiteHeader() {
           </ul>
         </div>
       </nav>
-      {categories.length > 0 && (
-        <div className="mm-catbar">
-          <div className="container">
-            <Link href="/products" className="mm-pill">
-              All
-            </Link>
-            {categories.map((c) => (
-              <Link key={c.name} href={`/products?category=${encodeURIComponent(c.name)}`} className="mm-pill">
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
