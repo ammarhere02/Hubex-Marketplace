@@ -317,12 +317,17 @@ a {
   background: #fff;
 }
 /* Evenly spaced bordered thumbnails; blue ring marks the selection. */
+/* One scrollable row like e-commerce.html, however many images a product has. */
 .mm-product-page .product-image-thumbs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 12px;
   margin-top: 1rem;
-  padding: 0;
+  padding: 0 0 6px;
+}
+.mm-product-page .product-image-thumb {
+  flex: 0 0 auto;
 }
 .mm-product-page .product-image-thumb {
   cursor: pointer;
@@ -560,14 +565,6 @@ a {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 /* Option swatch below its label, like the color dots in e-commerce.html. */
-.mm-swatch {
-  width: 2em;
-  height: 2em;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-top: 4px;
-  background: #fff;
-}
 .mm-toast {
   animation: mm-enter 0.25s ease both;
 }

@@ -71,14 +71,69 @@ const CUSTOM_COLORS: Record<string, string> = {
   mauve: "#e0b0ff",
   bronze: "#cd7f32",
   copper: "#b87333",
+  // German values (the dev store's products use Farbe/Grösse options).
+  schwarz: "#1f1f1f",
+  weiss: "#f8f8f8",
+  grau: "gray",
+  hellgrau: "lightgray",
+  dunkelgrau: "darkgray",
+  anthrazit: "#36454f",
+  blau: "blue",
+  hellblau: "lightblue",
+  dunkelblau: "darkblue",
+  dblau: "darkblue",
+  marine: "navy",
+  tuerkis: "turquoise",
+  rot: "red",
+  dunkelrot: "darkred",
+  weinrot: "#722f37",
+  bordeaux: "#5f021f",
+  gruen: "green",
+  hellgruen: "lightgreen",
+  dunkelgruen: "darkgreen",
+  oliv: "olive",
+  gelb: "yellow",
+  rosa: "pink",
+  lila: "purple",
+  violett: "violet",
+  braun: "#8b5a2b",
+  hellbraun: "#c8a165",
+  mittelbraun: "#cd853f",
+  mbraun: "#cd853f",
+  dunkelbraun: "#654321",
+  dbraun: "#654321",
+  silber: "silver",
+  kupfer: "#b87333",
+  creme: "#fffdd0",
+  natur: "#e8dcc5",
 };
 
-/** CSS color for an option value like "Blue" or "Light Blue", or null when unknown. */
+/** Lowercase, fold umlauts/ß, drop everything but letters: "d.Blau " → "dblau". */
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z]/g, "");
+}
+
+/** Option-name checks: English and German ("Farbe", "Grösse"). */
+export const isColorOption = (name: string) => /colou?r|farbe/.test(normalize(name));
+export const isSizeOption = (name: string) => /size|gr(oe|o)sse/.test(normalize(name));
+
+/** CSS color for an option value like "Blue", "Light Blue" or "dunkelbraun", or null when unknown. */
 export function cssColorFor(value: string): string | null {
-  const key = value.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim())) return value.trim();
+  const key = normalize(value);
   if (CUSTOM_COLORS[key]) return CUSTOM_COLORS[key];
   if (CSS_COLOR_KEYWORDS.has(key)) return key;
-  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim())) return value.trim();
+  // "metallic schwarz", "navy blue": fall back to the longest known color word inside.
+  const words = [...Object.keys(CUSTOM_COLORS), ...CSS_COLOR_KEYWORDS].sort((a, b) => b.length - a.length);
+  for (const w of words) {
+    if (w.length >= 4 && key.includes(w)) return CUSTOM_COLORS[w] ?? w;
+  }
   return null;
 }
 
@@ -144,14 +199,6 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
     if (i !== null) setImageIndex(i);
   }
 
-  /** Swatch image for an option value: the image of a variant carrying that value, if all such variants agree. */
-  function swatchFor(name: string, value: string) {
-    const ids = new Set(variants.filter((v) => v.options[name] === value).map((v) => v.imageId));
-    if (ids.size !== 1) return null;
-    const i = indexOfImage([...ids][0]);
-    return i === null ? null : images[i];
-  }
-
   const main = images[imageIndex];
   const canBuy = Boolean(variant?.available);
 
@@ -196,13 +243,13 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
             <hr />
 
             {visibleOptions.map((o) => {
-              const colorLike = /colou?r/i.test(o.name);
-              const sizeLike = /\bsize\b/i.test(o.name);
+              const colorLike = isColorOption(o.name);
+              const sizeLike = isSizeOption(o.name);
               return (
                 <div key={o.name}>
                   <h4 className="mt-3">
                     {colorLike ? (
-                      `Available ${o.name}s`
+                      "Available Colors"
                     ) : (
                       <>
                         {o.name} <small>Please select one</small>
@@ -215,7 +262,6 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
                       const possible = isPossible(o.name, value);
                       const circleColor = colorLike ? cssColorFor(value) : null;
                       const abbrev = sizeLike ? sizeAbbreviation(value) : null;
-                      const swatch = circleColor || abbrev ? null : swatchFor(o.name, value);
                       const text = possible ? value : <del>{value}</del>;
                       return (
                         <label
@@ -249,16 +295,7 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
                               )}
                             </>
                           ) : (
-                            <>
-                              {text}
-                              {swatch && (
-                                <>
-                                  <br />
-                                  {/* eslint-disable-next-line @next/next/no-img-element -- Shopify CDN URLs */}
-                                  <img src={swatch.url} alt="" className="mm-swatch" />
-                                </>
-                              )}
-                            </>
+                            text
                           )}
                         </label>
                       );

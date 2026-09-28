@@ -185,6 +185,27 @@ describe("ProductDetail", () => {
     expect(within(sizeGroup).getByText("Medium")).toBeInTheDocument();
   });
 
+  it("recognizes German option names and color values (Farbe/Grösse, schwarz/dunkelbraun)", () => {
+    const props = baseProps();
+    props.options = [
+      { name: "Farbe", values: ["schwarz", "dunkelbraun"] },
+      { name: "Grösse", values: ["M"] },
+    ];
+    props.variants = [
+      v(1, { Farbe: "schwarz", "Grösse": "M" }),
+      v(2, { Farbe: "dunkelbraun", "Grösse": "M" }),
+    ];
+    render(<ProductDetail {...props} />);
+    expect(screen.getByRole("heading", { name: "Available Colors" })).toBeInTheDocument();
+    const colorGroup = screen.getByRole("radiogroup", { name: "Farbe" });
+    const circles = colorGroup.querySelectorAll("i.fas.fa-circle.fa-2x");
+    expect(circles).toHaveLength(2);
+    expect((circles[0] as HTMLElement).style.color).toBe("rgb(31, 31, 31)"); // schwarz
+    expect((circles[1] as HTMLElement).style.color).toBe("rgb(101, 67, 33)"); // dunkelbraun
+    const sizeGroup = screen.getByRole("radiogroup", { name: "Grösse" });
+    expect(sizeGroup.querySelector("span.text-xl")).toHaveTextContent("M");
+  });
+
   it("falls back to a plain text tile for a color value it cannot map", () => {
     const props = baseProps();
     props.options = [{ name: "Color", values: ["Zebra Print"] }];
