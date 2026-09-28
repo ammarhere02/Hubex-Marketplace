@@ -18,14 +18,15 @@ jobs:
       SHOPIFY_API_VERSION: 2026-07
       SHOP_CURRENCY: PKR
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npx prisma validate
       - run: npx prisma generate
+      - run: npx next typegen
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
