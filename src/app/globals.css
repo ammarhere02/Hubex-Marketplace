@@ -44,9 +44,8 @@ a {
   font-weight: 700;
   font-size: 24px;
 }
-.mm-brand .fa-bars {
-  font-size: 18px;
-  color: var(--mm-blue);
+.mm-brand:focus:not(:focus-visible) {
+  outline: none;
 }
 .mm-navbar .nav-link {
   color: var(--mm-ink) !important;
