@@ -75,13 +75,25 @@ test.describe("queue dashboard gating", () => {
     await expect(page.getByText("Hubex queues")).toBeVisible();
   });
 
-  test("admin login without a next param lands on the queue board", async ({ page }) => {
+  test("admin login lands on the admin home, not the storefront, and reaches the board", async ({ page }) => {
     await gotoHydrated(page, "/login");
     await page.getByLabel("Email").fill(ADMIN_EMAIL);
     await page.getByLabel("Password").fill(ADMIN_PASSWORD);
     await page.getByRole("button", { name: "Sign In" }).click();
-    await expect(page).toHaveURL(/\/admin\/queues/);
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByText("Hubex Admin")).toBeVisible();
+    await page.getByRole("link", { name: "Open queue board" }).click();
     await expect(page.getByText("Hubex queues")).toBeVisible();
+  });
+
+  test("an admin session cannot browse the storefront: shop pages redirect to /admin", async ({ page }) => {
+    await gotoHydrated(page, "/login");
+    await page.getByLabel("Email").fill(ADMIN_EMAIL);
+    await page.getByLabel("Password").fill(ADMIN_PASSWORD);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await page.goto("/products");
+    await expect(page).toHaveURL(/\/admin$/);
   });
 
   test("a signed-in non-admin gets 404, not the board @desktop-only", async ({ page }) => {

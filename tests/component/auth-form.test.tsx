@@ -60,12 +60,14 @@ describe("AuthForm", () => {
   });
 
   it("posts login credentials as JSON to /api/auth/login and navigates home", async () => {
+    const { assign, restore } = fakeLocation("");
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { user: { id: 1 } }));
     const user = userEvent.setup();
     render(<AuthForm mode="login" />);
     await fillAndSubmit(user, "login");
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
-    expect(refresh).toHaveBeenCalled();
+    // Full page load so the fresh session renders server-side (no stale router cache).
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
+    restore();
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/auth/login");
     expect(init.method).toBe("POST");
@@ -74,11 +76,13 @@ describe("AuthForm", () => {
   });
 
   it("includes the name and targets /api/auth/register in register mode", async () => {
+    const { assign, restore } = fakeLocation("");
     fetchMock.mockResolvedValueOnce(jsonResponse(201, { user: { id: 1 } }));
     const user = userEvent.setup();
     render(<AuthForm mode="register" />);
     await fillAndSubmit(user, "register");
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
+    restore();
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/auth/register");
     expect(JSON.parse(init.body)).toEqual({
@@ -116,16 +120,21 @@ describe("AuthForm", () => {
   });
 
   it("clears a previous error on the next successful submit", async () => {
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse(401, { error: "Invalid email or password." }))
-      .mockResolvedValueOnce(jsonResponse(200, { user: { id: 1 } }));
-    const user = userEvent.setup();
-    render(<AuthForm mode="login" />);
-    await fillAndSubmit(user, "login");
-    expect(await screen.findByText("Invalid email or password.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Sign In" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
-    expect(screen.queryByText("Invalid email or password.")).not.toBeInTheDocument();
+    const { assign, restore } = fakeLocation("");
+    try {
+      fetchMock
+        .mockResolvedValueOnce(jsonResponse(401, { error: "Invalid email or password." }))
+        .mockResolvedValueOnce(jsonResponse(200, { user: { id: 1 } }));
+      const user = userEvent.setup();
+      render(<AuthForm mode="login" />);
+      await fillAndSubmit(user, "login");
+      expect(await screen.findByText("Invalid email or password.")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Sign In" }));
+      await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
+      expect(screen.queryByText("Invalid email or password.")).not.toBeInTheDocument();
+    } finally {
+      restore();
+    }
   });
 
   it("disables the button and shows a pending label while the request is in flight", async () => {
@@ -154,14 +163,14 @@ describe("AuthForm", () => {
     }
   });
 
-  it("sends an admin login to /admin/queues instead of the storefront", async () => {
+  it("sends an admin login to /admin instead of the storefront", async () => {
     const { assign, restore } = fakeLocation("");
     try {
       fetchMock.mockResolvedValueOnce(jsonResponse(200, { user: { id: 1 }, isAdmin: true }));
       const user = userEvent.setup();
       render(<AuthForm mode="login" />);
       await fillAndSubmit(user, "login");
-      await waitFor(() => expect(assign).toHaveBeenCalledWith("/admin/queues"));
+      await waitFor(() => expect(assign).toHaveBeenCalledWith("/admin"));
       expect(push).not.toHaveBeenCalled();
     } finally {
       restore();
@@ -177,8 +186,8 @@ describe("AuthForm", () => {
         const user = userEvent.setup();
         render(<AuthForm mode="login" />);
         await fillAndSubmit(user, "login");
-        await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
-        expect(assign).not.toHaveBeenCalled();
+        await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
+        expect(assign).not.toHaveBeenCalledWith(next);
       } finally {
         restore();
       }

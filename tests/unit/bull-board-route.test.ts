@@ -7,7 +7,7 @@ vi.mock("@/lib/queue", async (importOriginal) => ({
   getQueue,
 }));
 
-import { GET } from "@/app/(store)/admin/queues/[[...path]]/route";
+import { GET } from "@/app/(admin)/admin/queues/[[...path]]/route";
 
 describe("queue dashboard route (disabled configuration)", () => {
   // fake-env.ts leaves ADMIN_EMAIL/ADMIN_PASSWORD unset.

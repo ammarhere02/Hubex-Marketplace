@@ -1,15 +1,15 @@
 "use client";
 
 // Shared login/register form in AdminLTE auth-page style (icon input groups).
-// Posts JSON to the auth API and does a full refresh on success so the
-// server-rendered header picks up the new session.
-import { useRouter } from "next/navigation";
+// Posts JSON to the auth API. Success always navigates with a FULL page load
+// (window.location.assign, never the client router): the router's cache still
+// holds the pre-login render of "/" — a redirect to /login — so a soft
+// navigation right after signing in can paint a blank/stale page.
 import { useState } from "react";
 
 type Mode = "login" | "register";
 
 export function AuthForm({ mode }: { mode: Mode }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,14 +41,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         window.location.assign(next);
         return;
       }
-      // The env-configured admin signs in to operate, not to shop: default to
-      // the queue board (a route handler, so a full navigation, not router.push).
-      if (data?.isAdmin) {
-        window.location.assign("/admin/queues");
-        return;
-      }
-      router.push("/");
-      router.refresh();
+      // The env-configured admin signs in to operate, not to shop.
+      window.location.assign(data?.isAdmin ? "/admin" : "/");
     } catch {
       setError("Network error. Please try again.");
     } finally {
