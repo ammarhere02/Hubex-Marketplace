@@ -29,8 +29,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      const data = (await res.json().catch(() => null)) as { error?: string; isAdmin?: boolean } | null;
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
         setError(data?.error ?? "Something went wrong. Please try again.");
         return;
       }
@@ -39,6 +39,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
       const next = new URLSearchParams(window.location.search).get("next");
       if (next && next.startsWith("/") && !next.startsWith("//")) {
         window.location.assign(next);
+        return;
+      }
+      // The env-configured admin signs in to operate, not to shop: default to
+      // the queue board (a route handler, so a full navigation, not router.push).
+      if (data?.isAdmin) {
+        window.location.assign("/admin/queues");
         return;
       }
       router.push("/");

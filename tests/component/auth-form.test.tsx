@@ -154,6 +154,20 @@ describe("AuthForm", () => {
     }
   });
 
+  it("sends an admin login to /admin/queues instead of the storefront", async () => {
+    const { assign, restore } = fakeLocation("");
+    try {
+      fetchMock.mockResolvedValueOnce(jsonResponse(200, { user: { id: 1 }, isAdmin: true }));
+      const user = userEvent.setup();
+      render(<AuthForm mode="login" />);
+      await fillAndSubmit(user, "login");
+      await waitFor(() => expect(assign).toHaveBeenCalledWith("/admin/queues"));
+      expect(push).not.toHaveBeenCalled();
+    } finally {
+      restore();
+    }
+  });
+
   it.each(["https://evil.example", "//evil.example"])(
     "ignores an unsafe ?next= value (%s) and goes home instead",
     async (next) => {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { authenticateAdmin } from "@/lib/auth/admin";
+import { authenticateAdmin, isAdmin } from "@/lib/auth/admin";
 import { authenticateLocal } from "@/lib/auth/passport";
 import { createSession } from "@/lib/auth/session";
 import { logger } from "@/lib/logger";
@@ -26,5 +26,8 @@ export async function POST(request: Request) {
 
   await createSession(user.id);
   logger.info({ userId: user.id }, "auth: user logged in");
-  return NextResponse.json({ user });
+  // isAdmin lets the login form send the operator to /admin/queues instead of
+  // the storefront. Only a boolean about the caller's own session — the env
+  // admin identity itself stays server-side.
+  return NextResponse.json({ user, isAdmin: isAdmin(user) });
 }

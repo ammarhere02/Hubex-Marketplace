@@ -75,6 +75,15 @@ test.describe("queue dashboard gating", () => {
     await expect(page.getByText("Hubex queues")).toBeVisible();
   });
 
+  test("admin login without a next param lands on the queue board", async ({ page }) => {
+    await gotoHydrated(page, "/login");
+    await page.getByLabel("Email").fill(ADMIN_EMAIL);
+    await page.getByLabel("Password").fill(ADMIN_PASSWORD);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page).toHaveURL(/\/admin\/queues/);
+    await expect(page.getByText("Hubex queues")).toBeVisible();
+  });
+
   test("a signed-in non-admin gets 404, not the board @desktop-only", async ({ page }) => {
     const email = `e2e-nonadmin-${Date.now()}@example.com`;
     await gotoHydrated(page, "/register");
