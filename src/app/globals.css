@@ -336,10 +336,16 @@ a {
   opacity: 0;
   pointer-events: none;
 }
+/* The bar remounts per click, so an animation (not a transition) grows it from 0. */
 .mm-progress-loading {
   opacity: 1;
   width: 85%;
-  transition: width 8s cubic-bezier(0.1, 0.8, 0.2, 1);
+  animation: mm-grow 8s cubic-bezier(0.1, 0.8, 0.2, 1) both;
+}
+@keyframes mm-grow {
+  from {
+    width: 0;
+  }
 }
 .mm-progress-done {
   opacity: 0;

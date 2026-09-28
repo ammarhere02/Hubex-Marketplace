@@ -2,14 +2,20 @@
 // Top-of-page progress bar for client-side navigation. Starts when an internal link
 // is clicked and finishes once the new route's pathname/search params are committed,
 // so a click gives immediate feedback instead of a silent pause.
+// The bar state is derived (no setState in effects): "loading" while the route is
+// still the one we clicked from, "done" once it has changed.
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export function NavProgress() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const route = `${usePathname()}?${useSearchParams()}`;
+  const routeRef = useRef(route);
+  // Route the last navigation started from, plus a counter that remounts the bar per click.
+  const [started, setStarted] = useState<{ from: string; n: number } | null>(null);
+
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -19,21 +25,12 @@ export function NavProgress() {
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin) return;
       if (url.pathname === location.pathname && url.search === location.search) return;
-      if (timer.current) clearTimeout(timer.current);
-      setState("loading");
+      setStarted((s) => ({ from: routeRef.current, n: (s?.n ?? 0) + 1 }));
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
-  // A committed route change ends the bar.
-  useEffect(() => {
-    setState((s) => (s === "loading" ? "done" : s));
-    timer.current = setTimeout(() => setState("idle"), 400);
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [pathname, searchParams]);
-
-  return <div className={`mm-progress mm-progress-${state}`} aria-hidden />;
+  const state = !started ? "idle" : started.from === route ? "loading" : "done";
+  return <div key={started?.n ?? 0} className={`mm-progress mm-progress-${state}`} aria-hidden />;
 }
