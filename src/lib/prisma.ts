@@ -16,6 +16,9 @@ function create(): PrismaClient {
     password: decodeURIComponent(url.password),
     database: url.pathname.slice(1),
     connectionLimit: 5,
+    // MySQL 8+ defaults to caching_sha2_password; over a non-TLS link (Railway's
+    // private network) the driver must fetch the server's RSA key to log in.
+    allowPublicKeyRetrieval: true,
   });
   return new PrismaClient({ adapter });
 }
