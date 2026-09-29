@@ -53,6 +53,25 @@ export default async function AdminHome() {
               </div>
             </div>
           </div>
+          <div className="col-12 col-md-6 col-lg-4">
+            <div className="card card-outline card-warning">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <i className="fas fa-receipt mr-2" />
+                  Orders
+                </h3>
+              </div>
+              <div className="card-body">
+                <p className="mb-3">
+                  Every order with its Shopify sync status (<code>PENDING_SYNC</code>, <code>SYNCED</code>,{" "}
+                  <code>FAILED</code>) and a retry action for failed submissions.
+                </p>
+                <Link href="/admin/orders" className="btn btn-warning">
+                  Open orders
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

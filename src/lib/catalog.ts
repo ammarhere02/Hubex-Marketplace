@@ -53,8 +53,12 @@ function toCard({ variants, images, productType, ...p }: CardRow): ProductCard {
   };
 }
 
-export async function listProducts({ page, category }: { page: number; category?: string }) {
-  const where: Prisma.ProductWhereInput = { ...visibleProduct, ...(category ? { productType: category } : {}) };
+export async function listProducts({ page, category, search }: { page: number; category?: string; search?: string }) {
+  const where: Prisma.ProductWhereInput = {
+    ...visibleProduct,
+    ...(category ? { productType: category } : {}),
+    ...(search ? { title: { contains: search } } : {}),
+  };
   const [total, rows] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({

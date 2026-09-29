@@ -167,6 +167,17 @@ export async function enqueueSubmitOrder(orderId: number): Promise<void> {
   );
 }
 
+/**
+ * Admin retry for a FAILED order: the finished Redis job still holds the
+ * deterministic jobId, so it must be removed before re-adding, or the add is a
+ * silent no-op and the order would sit in PENDING_SYNC forever.
+ */
+export async function requeueSubmitOrder(orderId: number): Promise<void> {
+  const stale = await getQueue(QUEUES.orders).getJob(submitOrderJobId(orderId));
+  if (stale) await stale.remove();
+  await enqueueSubmitOrder(orderId);
+}
+
 /** Refreshes one product after a webhook. Job ID per receipt: one job per delivery. */
 export async function enqueueSyncProduct(receiptId: number, shopifyProductId: string): Promise<void> {
   await getQueue(QUEUES.catalog).add(
