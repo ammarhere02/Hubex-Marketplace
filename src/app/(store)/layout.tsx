@@ -5,6 +5,7 @@
 // an operator, not a customer: any shop page redirects an admin session to
 // /admin, so the storefront (cart, checkout) is customers-only.
 import { redirect } from "next/navigation";
+import { IdleLogout } from "@/app/_components/idle-logout";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SiteHeader } from "@/app/_components/site-header";
 import { isAdmin } from "@/lib/auth/admin";
@@ -14,6 +15,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   if (isAdmin(await getSessionUser())) redirect("/admin");
   return (
     <div className="wrapper">
+      <IdleLogout />
       <SiteHeader />
       <div className="content-wrapper mm-content">{children}</div>
       <SiteFooter />

@@ -8,6 +8,7 @@
 // Access: anonymous users never get here (proxy gate → /login); signed-in
 // non-admins get 404 so the panel's existence isn't advertised.
 import { notFound } from "next/navigation";
+import { IdleLogout } from "@/app/_components/idle-logout";
 import { LogoutButton } from "@/app/_components/logout-button";
 import { isAdmin } from "@/lib/auth/admin";
 import { getSessionUser } from "@/lib/auth/session";
@@ -19,6 +20,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="d-flex" style={{ minHeight: "100vh" }}>
+      <IdleLogout />
       <aside className="main-sidebar sidebar-dark-primary elevation-2 d-flex flex-column" // marginLeft/transform overrides: AdminLTE's mobile media query pushes
         // .main-sidebar off-canvas (it expects jQuery to toggle it back); this
         // panel keeps the sidebar always visible instead.

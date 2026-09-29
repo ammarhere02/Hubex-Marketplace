@@ -6,8 +6,9 @@ import { AuthForm } from "./auth-form";
 
 export const metadata = { title: "Sign in — Hubex Market" };
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await getSessionUser()) redirect("/");
+  const { reason } = await searchParams;
   return (
     <div className="login-box">
       <div className="card card-outline card-primary">
@@ -17,6 +18,11 @@ export default async function LoginPage() {
           </Link>
         </div>
         <div className="card-body login-card-body">
+          {reason === "idle" && (
+            <div className="alert alert-warning py-2 mb-3" role="alert">
+              You were signed out after 5 minutes of inactivity.
+            </div>
+          )}
           <p className="login-box-msg">Sign in to start your session</p>
           <AuthForm mode="login" />
           <p className="mb-0 mt-3">
