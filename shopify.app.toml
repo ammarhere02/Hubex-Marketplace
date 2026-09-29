@@ -2,14 +2,14 @@
 
 client_id = "96537e7709726d5f3d4b41a0ec1c46d0"
 name = "Hubex Marketplace"
-application_url = "https://curtain-disrupt-gummy.ngrok-free.dev"
+application_url = "https://hubex-marketplace-production.up.railway.app"
 embedded = true
 
 [webhooks]
 api_version = "2026-07"
 
-# Relative URI → resolved against application_url (the ngrok static domain), which
-# tunnels to the local Next.js route src/app/api/webhooks/shopify/route.ts.
+# Relative URI → resolved against application_url (the Railway production domain),
+# delivered to src/app/api/webhooks/shopify/route.ts on the live site.
 [[webhooks.subscriptions]]
 topics = [ "products/create", "products/update", "products/delete" ]
 uri = "/api/webhooks/shopify"
@@ -19,7 +19,7 @@ uri = "/api/webhooks/shopify"
 scopes = "read_inventory,read_products,write_orders"
 
 [auth]
-redirect_urls = [ "https://curtain-disrupt-gummy.ngrok-free.dev/api/auth" ]
+redirect_urls = [ "https://hubex-marketplace-production.up.railway.app/api/auth" ]
 
 [build]
 automatically_update_urls_on_dev = false
