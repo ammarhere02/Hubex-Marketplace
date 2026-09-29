@@ -28,6 +28,8 @@ export interface DetailProps {
   currency: string;
   images: Array<{ id: number; url: string; altText: string | null }>;
   options: Array<{ name: string; values: string[] }>;
+  /** Taxonomy "Color" category metafield swatches: display-only (not variants). */
+  colors?: Array<{ label: string; color: string | null }>;
   variants: DetailVariant[];
 }
 
@@ -164,7 +166,7 @@ export function sizeAbbreviation(value: string): string | null {
   return null;
 }
 
-export function ProductDetail({ title, descriptionHtml, descriptionText, currency, images, options, variants }: DetailProps) {
+export function ProductDetail({ title, descriptionHtml, descriptionText, currency, images, options, colors = [], variants }: DetailProps) {
   const initial = variants.find((v) => v.available) ?? variants[0];
   const indexOfImage = (imageId: number | null | undefined) => {
     const i = images.findIndex((img) => img.id === imageId);
@@ -178,6 +180,9 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
 
   // Shopify's default single variant has the option "Title: Default Title": hide it.
   const visibleOptions = options.filter((o) => !(o.values.length === 1 && o.values[0] === "Default Title"));
+  // Category-metafield colors are informational. Skip them when a real Color
+  // variant option exists, so the same colors aren't listed twice.
+  const metafieldColors = visibleOptions.some((o) => isColorOption(o.name)) ? [] : colors;
   const variant = useMemo(() => variants.find((v) => matches(v, selected)), [variants, selected]);
 
   /** A value is selectable if some available variant has it together with the other current choices. */
@@ -241,6 +246,28 @@ export function ProductDetail({ title, descriptionHtml, descriptionText, currenc
             <h3 className="my-3">{title}</h3>
             {descriptionText && <p>{descriptionText}</p>}
             <hr />
+
+            {metafieldColors.length > 0 && (
+              <div>
+                <h4 className="mt-3">Available Colors</h4>
+                <div className="btn-group btn-group-toggle" role="group" aria-label="Available colors">
+                  {metafieldColors.map((c) => {
+                    const circleColor = c.color ?? cssColorFor(c.label);
+                    return (
+                      <span key={c.label} className="btn btn-default text-center" style={{ cursor: "default" }}>
+                        {c.label}
+                        {circleColor && (
+                          <>
+                            <br />
+                            <i className="fas fa-circle fa-2x" style={{ color: circleColor }} aria-hidden="true" />
+                          </>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {visibleOptions.map((o) => {
               const colorLike = isColorOption(o.name);

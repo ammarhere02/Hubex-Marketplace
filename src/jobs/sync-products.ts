@@ -32,6 +32,7 @@ export async function upsertProduct(p: ShopifyProduct, runStartedAt: Date): Prom
     status: toStatus(p.status),
     productType: p.productType.trim(),
     options: p.options as unknown as Prisma.InputJsonValue,
+    colors: p.colors as unknown as Prisma.InputJsonValue,
     isRemoved: false,
     lastSyncedAt: runStartedAt,
   };

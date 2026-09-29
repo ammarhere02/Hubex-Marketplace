@@ -41,6 +41,7 @@ const product: ShopifyProduct = {
   status: "ACTIVE",
   productType: "Shoes",
   options: [],
+  colors: [],
   variants: [
     {
       id: "gid://shopify/ProductVariant/777-1",

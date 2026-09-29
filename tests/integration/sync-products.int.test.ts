@@ -31,6 +31,7 @@ function shopifyProduct(n: number, over: Partial<ShopifyProduct> = {}): ShopifyP
     status: "ACTIVE",
     productType: "Shoes",
     options: [{ name: "Size", position: 1, values: ["S"] }],
+    colors: [],
     variants: [
       {
         id: `gid://shopify/ProductVariant/${n}-1`,

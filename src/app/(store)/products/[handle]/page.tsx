@@ -14,6 +14,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[hand
   if (!product) notFound(); // unknown, draft, archived, or removed
 
   const options = (product.options as Array<{ name: string; values: string[] }>) ?? [];
+  const colors = (product.colors as Array<{ label: string; color: string | null }>) ?? [];
   // Lead paragraph under the title, as in e-commerce.html: plain text, first ~300 chars.
   const descriptionText = product.descriptionHtml
     .replace(/<[^>]+>/g, " ")
@@ -52,6 +53,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[hand
         currency={env().SHOP_CURRENCY}
         images={product.images.map((i) => ({ id: i.id, url: i.url, altText: i.altText }))}
         options={options.map((o) => ({ name: o.name, values: o.values }))}
+        colors={colors}
         variants={product.variants.map((v) => ({
           id: v.id,
           title: v.title,

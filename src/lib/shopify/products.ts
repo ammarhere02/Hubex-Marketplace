@@ -40,6 +40,13 @@ export interface ShopifyImage {
   altText: string | null;
 }
 
+/** A swatch from the taxonomy "Color" category metafield (shopify.color-pattern). */
+export interface ShopifyColor {
+  label: string;
+  /** Hex like "#ff0000" from the taxonomy metaobject, when present. */
+  color: string | null;
+}
+
 export interface ShopifyProduct {
   id: string;
   handle: string;
@@ -48,6 +55,7 @@ export interface ShopifyProduct {
   status: string;
   productType: string;
   options: Array<{ name: string; position: number; values: string[] }>;
+  colors: ShopifyColor[];
   variants: ShopifyVariant[];
   images: ShopifyImage[];
 }
@@ -55,7 +63,10 @@ export interface ShopifyProduct {
 // Non-image media (video, 3D) match no fragment and arrive as {}.
 type RawMedia = { id?: string; alt?: string | null; image?: { url: string; altText: string | null } | null };
 type RawVariant = Omit<ShopifyVariant, "imageId"> & { media: { nodes: Array<{ id?: string }> } };
-type RawProduct = Omit<ShopifyProduct, "variants" | "images"> & {
+// references nodes are null when the token lacks read_metaobjects.
+type RawColorPattern = { references: { nodes: Array<{ fields: Array<{ key: string; value: string | null }> } | null> } } | null;
+type RawProduct = Omit<ShopifyProduct, "variants" | "images" | "colors"> & {
+  colorPattern: RawColorPattern;
   variants: Connection<RawVariant>;
   media: Connection<RawMedia>;
 };
@@ -65,6 +76,24 @@ const VARIANT_FIELDS = `id title sku price compareAtPrice inventoryQuantity avai
 const toVariant = ({ media, ...v }: RawVariant): ShopifyVariant => ({ ...v, imageId: media?.nodes[0]?.id ?? null });
 const MEDIA_FIELDS = `... on MediaImage { id alt image { url altText } }`;
 
+// Taxonomy "Color" category metafield: a list of shopify--color-pattern metaobjects
+// whose fields carry the label ("Black") and swatch hex ("#000000"). Reading the
+// referenced metaobjects requires the read_metaobjects scope; without it the nodes
+// arrive as null and the product simply syncs with no colors.
+const COLOR_PATTERN_FIELD = `colorPattern: metafield(namespace: "shopify", key: "color-pattern") { references(first: 20) { nodes { ... on Metaobject { fields { key value } } } } }`;
+
+function toColors(colorPattern: RawColorPattern): ShopifyColor[] {
+  const nodes = colorPattern?.references?.nodes ?? [];
+  const colors: ShopifyColor[] = [];
+  for (const node of nodes) {
+    if (!node) continue;
+    const field = (key: string) => node.fields.find((f) => f.key === key)?.value ?? null;
+    const label = field("label");
+    if (label) colors.push({ label, color: field("color") });
+  }
+  return colors;
+}
+
 const PRODUCTS_QUERY = `
 query SyncProductsPage($first: Int!, $after: String) {
   products(first: $first, after: $after, sortKey: ID) {
@@ -72,6 +101,7 @@ query SyncProductsPage($first: Int!, $after: String) {
     nodes {
       id handle title descriptionHtml status productType
       options { name position values }
+      ${COLOR_PATTERN_FIELD}
       variants(first: ${VARIANTS_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${VARIANT_FIELDS} } }
       media(first: ${MEDIA_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${MEDIA_FIELDS} } }
     }
@@ -141,6 +171,7 @@ async function completeProduct(raw: RawProduct, log?: Logger): Promise<ShopifyPr
     status: raw.status,
     productType: raw.productType,
     options: raw.options,
+    colors: toColors(raw.colorPattern),
     variants: variants.map(toVariant),
     images: toImages(media),
   };
@@ -151,6 +182,7 @@ query SyncOneProduct($id: ID!) {
   product(id: $id) {
     id handle title descriptionHtml status productType
     options { name position values }
+    ${COLOR_PATTERN_FIELD}
     variants(first: ${VARIANTS_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${VARIANT_FIELDS} } }
     media(first: ${MEDIA_PER_PAGE}) { pageInfo { hasNextPage endCursor } nodes { ${MEDIA_FIELDS} } }
   }

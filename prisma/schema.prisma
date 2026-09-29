@@ -40,6 +40,8 @@ model Product {
   // Shopify productType; the storefront uses it as the category ("" = uncategorised).
   productType     String        @default("") @db.VarChar(255)
   options         Json
+  // Swatches from the taxonomy "Color" category metafield: [{ label, color }].
+  colors          Json          @default("[]")
   // Set when a completed scan no longer sees this product in Shopify (deleted).
   isRemoved       Boolean       @default(false)
   lastSyncedAt    DateTime
