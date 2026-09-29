@@ -35,13 +35,6 @@ export function AdminSidebarNav() {
             </li>
           );
         })}
-        <li className="nav-header">STOREFRONT</li>
-        <li className="nav-item">
-          <a href="/" className="nav-link">
-            <i className="nav-icon fas fa-store" />
-            <p>View shop</p>
-          </a>
-        </li>
       </ul>
     </nav>
   );
