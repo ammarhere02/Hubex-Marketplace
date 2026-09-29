@@ -82,7 +82,7 @@ test.describe("queue dashboard gating", () => {
     await page.getByRole("button", { name: "Sign In" }).click();
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByText("Hubex Admin")).toBeVisible();
-    await page.getByRole("link", { name: "Open queue board" }).click();
+    await page.getByRole("link", { name: "Queue board" }).click();
     await expect(page.getByText("Hubex queues")).toBeVisible();
   });
 
